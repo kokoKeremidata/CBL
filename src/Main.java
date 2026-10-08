@@ -15,7 +15,7 @@ public class Main extends JFrame {
         setContentPane(panel);
         setTitle("Watchlist");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(300, 200);
+        setSize(1000, 600);
         setLocationRelativeTo(null);
         setVisible(true);
     }
