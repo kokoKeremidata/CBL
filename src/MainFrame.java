@@ -1,23 +1,21 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package src;
 import javax.swing.*;
-/**
- *
- * @author name
- */
+
 public class MainFrame extends javax.swing.JFrame {
     
+    private static final String APP_FONT = "Monospaced";
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
-
     /**
      * Creates new form NewJFrame
      */
     public MainFrame() {
         initComponents();
-        setupAnimeCards();
+        setupMainLayout();
+
+        setTitle("Anime Watchlist Manager");
+        setSize(1000, 650);
+        setMinimumSize(new java.awt.Dimension(850,550));
+        setLocationRelativeTo(null);
     }
 
     /**
@@ -136,78 +134,221 @@ public class MainFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextField1ActionPerformed
 
-    private void setupAnimeCards() {
-    JPanel animeGridPanel = new JPanel(
-        new java.awt.FlowLayout(
-            java.awt.FlowLayout.LEFT,
-            12,
-            12
-        )
-    );
+    private void setupMainLayout() {
+        java.awt.Color background = java.awt.Color.decode("#211B38");
+        java.awt.Color cardBackground = java.awt.Color.decode("#302840");
+        java.awt.Color accent = java.awt.Color.decode("#C4B5FD");
+        java.awt.Color foreground = java.awt.Color.WHITE;
 
-    animeGridPanel.setBorder(
-        javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10)
-    );
+        // Reuse the panels to avoid clash issues
+        jPanel1.removeAll();
+        jPanel2.removeAll();
 
-    animeGridPanel.setBackground(new java.awt.Color(30, 30, 35));
+        // Main window layout
+        getContentPane().setLayout(new java.awt.BorderLayout(12, 0));
+        getContentPane().setBackground(background);
 
-    animeGridPanel.add(createAnimeCard("Frieren"));
-    animeGridPanel.add(createAnimeCard("Spy x Family"));
-    animeGridPanel.add(createAnimeCard("Jujutsu Kaisen"));
-    
-    getContentPane().setBackground(
-        java.awt.Color.decode("#211B38")
-    );
+        jPanel1.setLayout(new java.awt.BorderLayout(0, 16));
+        jPanel1.setBackground(background);
+        jPanel1.setBorder(
+            javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 8)
+        );
 
-    jPanel1.setBackground(
-        java.awt.Color.decode("#211B38")
-    );
+        jPanel2.setLayout(new java.awt.BorderLayout(0, 12));
+        jPanel2.setBackground(cardBackground);
+        jPanel2.setPreferredSize(new java.awt.Dimension(245, 0));
+        jPanel2.setBorder(
+            javax.swing.BorderFactory.createEmptyBorder(18, 14, 18, 14)
+        );
 
-    jPanel2.setBackground(
-        java.awt.Color.decode("#211B38")
-    );
+        // Header
+        javax.swing.JPanel header = new javax.swing.JPanel(
+            new java.awt.BorderLayout()
+        );
+        header.setBackground(background);
 
-    // Replace the old JList in the existing scroll pane
-    jScrollPane1.setViewportView(animeGridPanel);
-}
+        javax.swing.JPanel titlePanel = new javax.swing.JPanel(
+            new java.awt.GridLayout(2, 1, 0, 4)
+        );
+        titlePanel.setBackground(background);
 
-private JPanel createAnimeCard(String animeName) {
-    JPanel card = new JPanel(new java.awt.BorderLayout());
+        javax.swing.JLabel titleLabel =
+            new javax.swing.JLabel("Anime Watchlist Manager");
+        titleLabel.setForeground(foreground);
+        titleLabel.setFont(new java.awt.Font(
+            APP_FONT, java.awt.Font.BOLD, 24
+        ));
 
-    card.setPreferredSize(new java.awt.Dimension(140, 200));
-    card.setMinimumSize(new java.awt.Dimension(100, 140));
-    card.setMaximumSize(new java.awt.Dimension(140, 200));
-    
-    // Card background
-    card.setBackground(
-        java.awt.Color.decode("#211B38")
-    );
+        javax.swing.JLabel subtitleLabel =
+            new javax.swing.JLabel("Your personal anime library");
+        subtitleLabel.setForeground(accent);
+        subtitleLabel.setFont(new java.awt.Font(
+            APP_FONT, java.awt.Font.PLAIN, 13
+        ));
 
-    // Card border
-    card.setBorder(
-        javax.swing.BorderFactory.createLineBorder(
-            java.awt.Color.decode("#C4B5FD")
-        )
-    );
+        titlePanel.add(titleLabel);
+        titlePanel.add(subtitleLabel);
 
-    // Anime Title
-    JLabel nameLabel = new JLabel(
-        animeName,
-        javax.swing.SwingConstants.CENTER
-    );
+        javax.swing.JButton addButton = new javax.swing.JButton("+ Add Anime");
+        addButton.setBackground(accent);
+        addButton.setForeground(java.awt.Color.decode("#211B38"));
 
-    nameLabel.setForeground(
-        java.awt.Color.decode("#C4B5FD")
-    );
-    
-    nameLabel.setFont(new java.awt.Font(
-        "SansSerif", java.awt.Font.BOLD, 12
-    ));
+        header.add(titlePanel, java.awt.BorderLayout.CENTER);
+        header.add(addButton, java.awt.BorderLayout.EAST);
 
-    card.add(nameLabel, java.awt.BorderLayout.CENTER);
+        // Search and filter bar
+        javax.swing.JPanel toolbar = new javax.swing.JPanel(
+            new java.awt.BorderLayout(8, 0)
+        );
+        toolbar.setBackground(background);
 
-    return card;
-}
+        jTextField1.setText("");
+        jTextField1.setToolTipText("Search anime...");
+        jTextField1.setPreferredSize(new java.awt.Dimension(200, 36));
+
+        jButton1.setText("Search");
+        jButton1.setPreferredSize(new java.awt.Dimension(85, 36));
+
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(
+            new String[] {
+                "All Anime",
+                "Watching",
+                "Completed",
+                "Plan to Watch",
+                "On Hold",
+                "Dropped"
+            }
+        ));
+
+        // Search field
+        toolbar.add(jTextField1, java.awt.BorderLayout.CENTER);
+
+        // Search button
+        toolbar.add(jButton1, java.awt.BorderLayout.EAST);
+
+        // Status filter, might be used as folder as well
+        toolbar.add(jComboBox1, java.awt.BorderLayout.WEST);
+
+        // Collection section
+        javax.swing.JPanel collectionPanel = new javax.swing.JPanel(
+            new java.awt.BorderLayout(0, 12)
+        );
+        collectionPanel.setBackground(background);
+
+        javax.swing.JPanel collectionHeader = new javax.swing.JPanel(
+            new java.awt.BorderLayout()
+        );
+        collectionHeader.setBackground(background);
+
+        javax.swing.JLabel collectionLabel =
+            new javax.swing.JLabel("My Collection");
+        collectionLabel.setForeground(foreground);
+        collectionLabel.setFont(new java.awt.Font(
+            APP_FONT, java.awt.Font.BOLD, 18
+        ));
+
+        collectionHeader.add(
+            collectionLabel, java.awt.BorderLayout.WEST
+        );
+
+        // Holding anime cards in a good manner by animeGridPanel
+        // Automatically adjust to the available space
+        javax.swing.JPanel animeGridPanel = new javax.swing.JPanel(
+            new ResponsiveGridLayout()
+        );
+        animeGridPanel.setBackground(background);
+        animeGridPanel.setBorder(
+            javax.swing.BorderFactory.createEmptyBorder(4, 2, 12, 2)
+        );
+
+        animeGridPanel.add(new AnimeCard("Frieren"));
+        animeGridPanel.add(new AnimeCard("Spy x Family"));
+        animeGridPanel.add(new AnimeCard("Jujutsu Kaisen"));
+        animeGridPanel.add(new AnimeCard("Maimai deluxe"));
+
+        jScrollPane1.setViewportView(animeGridPanel);
+        jScrollPane1.setBorder(null);
+        jScrollPane1.getViewport().setBackground(background);
+
+        collectionPanel.add(
+            collectionHeader, java.awt.BorderLayout.NORTH
+        );
+        collectionPanel.add(
+            jScrollPane1, java.awt.BorderLayout.CENTER
+        );
+
+        // Assemble the main area
+        javax.swing.JPanel leftContent = new javax.swing.JPanel(
+            new java.awt.BorderLayout(0, 18)
+        );
+        leftContent.setBackground(background);
+        leftContent.add(header, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel contentArea = new javax.swing.JPanel(
+            new java.awt.BorderLayout(0, 14)
+        );
+        contentArea.setBackground(background);
+        contentArea.add(toolbar, java.awt.BorderLayout.NORTH);
+        contentArea.add(collectionPanel, java.awt.BorderLayout.CENTER);
+
+        leftContent.add(contentArea, java.awt.BorderLayout.CENTER);
+        jPanel1.add(leftContent, java.awt.BorderLayout.CENTER);
+
+        // Watchlist sidebar
+        javax.swing.JLabel watchlistLabel =
+            new javax.swing.JLabel("WATCHLIST");
+        watchlistLabel.setForeground(foreground);
+        watchlistLabel.setFont(new java.awt.Font(
+            APP_FONT, java.awt.Font.BOLD, 16
+        ));
+
+        javax.swing.tree.DefaultMutableTreeNode root =
+            new javax.swing.tree.DefaultMutableTreeNode("My Watchlist");
+
+        String[] statuses = {
+            "Watching",
+            "Completed",
+            "Plan to Watch",
+            "On Hold",
+            "Dropped"
+        };
+
+        for (String status : statuses) {
+            root.add(new javax.swing.tree.DefaultMutableTreeNode(status));
+        }
+
+        javax.swing.JTree watchlistTree =
+            new javax.swing.JTree(root);
+        watchlistTree.setRootVisible(false);
+        watchlistTree.setShowsRootHandles(true);
+        watchlistTree.setBackground(cardBackground);
+        watchlistTree.setForeground(foreground);
+        watchlistTree.setBorder(
+            javax.swing.BorderFactory.createEmptyBorder(8, 4, 8, 4)
+        );
+
+        javax.swing.JScrollPane watchlistScroll =
+            new javax.swing.JScrollPane(watchlistTree);
+        watchlistScroll.setBorder(null);
+        watchlistScroll.getViewport().setBackground(cardBackground);
+
+        jPanel2.add(watchlistLabel, java.awt.BorderLayout.NORTH);
+        jPanel2.add(watchlistScroll, java.awt.BorderLayout.CENTER);
+
+        // Hide the old action buttons for now.
+        // Edit and Delete shall pop up when an anime is selected.
+        jButton2.setVisible(false);
+        jButton3.setVisible(false);
+        jButton4.setVisible(false);
+
+        getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
+        getContentPane().add(jPanel2, java.awt.BorderLayout.EAST);
+
+        revalidate();
+        repaint();
+    }
+
+
     /**
      * @param args the command line arguments
      */
