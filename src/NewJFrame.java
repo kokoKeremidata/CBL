@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package src;
-
+import javax.swing.*;
 /**
  *
  * @author name
@@ -17,6 +17,7 @@ public class NewJFrame extends javax.swing.JFrame {
      */
     public NewJFrame() {
         initComponents();
+        setupAnimeCards();
     }
 
     /**
@@ -124,8 +125,8 @@ public class NewJFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -135,6 +136,78 @@ public class NewJFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextField1ActionPerformed
 
+    private void setupAnimeCards() {
+    JPanel animeGridPanel = new JPanel(
+        new java.awt.FlowLayout(
+            java.awt.FlowLayout.LEFT,
+            12,
+            12
+        )
+    );
+
+    animeGridPanel.setBorder(
+        javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10)
+    );
+
+    animeGridPanel.setBackground(new java.awt.Color(30, 30, 35));
+
+    animeGridPanel.add(createAnimeCard("Frieren"));
+    animeGridPanel.add(createAnimeCard("Spy x Family"));
+    animeGridPanel.add(createAnimeCard("Jujutsu Kaisen"));
+    
+    getContentPane().setBackground(
+        java.awt.Color.decode("#211B38")
+    );
+
+    jPanel1.setBackground(
+        java.awt.Color.decode("#211B38")
+    );
+
+    jPanel2.setBackground(
+        java.awt.Color.decode("#211B38")
+    );
+
+    // Replace the old JList in the existing scroll pane
+    jScrollPane1.setViewportView(animeGridPanel);
+}
+
+private JPanel createAnimeCard(String animeName) {
+    JPanel card = new JPanel(new java.awt.BorderLayout());
+
+    card.setPreferredSize(new java.awt.Dimension(140, 200));
+    card.setMinimumSize(new java.awt.Dimension(100, 140));
+    card.setMaximumSize(new java.awt.Dimension(140, 200));
+    
+    // Card background
+    card.setBackground(
+        java.awt.Color.decode("#211B38")
+    );
+
+    // Card border
+    card.setBorder(
+        javax.swing.BorderFactory.createLineBorder(
+            java.awt.Color.decode("#C4B5FD")
+        )
+    );
+
+    // Anime Title
+    JLabel nameLabel = new JLabel(
+        animeName,
+        javax.swing.SwingConstants.CENTER
+    );
+
+    nameLabel.setForeground(
+        java.awt.Color.decode("#C4B5FD")
+    );
+    
+    nameLabel.setFont(new java.awt.Font(
+        "SansSerif", java.awt.Font.BOLD, 12
+    ));
+
+    card.add(nameLabel, java.awt.BorderLayout.CENTER);
+
+    return card;
+}
     /**
      * @param args the command line arguments
      */
