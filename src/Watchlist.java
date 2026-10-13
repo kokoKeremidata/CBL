@@ -7,22 +7,44 @@ public class Watchlist {
     private List<Anime> anime = new ArrayList<>();
     
     public void Watchlist(String name){
-        this.name = name;
+        if (!name.isBlank()) {
+            this.name = name;
+        }
     }
+    
     public void addAnime(Anime anime){
-        this.anime.add(anime);
+        if (anime != null) {
+            if (!this.anime.contains(anime))
+                this.anime.add(anime);
+            else
+                System.out.println("anime already exists");
+        } else
+            System.out.println("no anime");
     }
+    
     public void removeAnime(Anime anime) {
         this.anime.remove(anime);
     }
+    
     public Anime searchByName(String name) {
-        for (int i = 0; i < anime.size() - 1; i++) {
-            if (anime.get(i).getName(Lang.EN).equalsIgnoreCase(name) ||
-                anime.get(i).getName(Lang.JP).equalsIgnoreCase(name) ||
-                anime.get(i).getName(Lang.CH).equalsIgnoreCase(name)) {
-                return anime.get(i);
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        for (int i = 0; i < anime.size(); i++) {
+            Anime current = anime.get(i);
+            for (Lang lang : Lang.values()) {
+                String title = current.getName(lang);
+                if (title != null &&
+                    title.toLowerCase().contains(name.toLowerCase())) {
+                    return current;
+                }
             }
         }
+        
         return null;
+    }
+    
+    public List<Anime> getAnime(){
+        return anime;
     }
 }
