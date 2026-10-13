@@ -41,7 +41,7 @@ public class Anime {
     private Set<Genre> genres = new HashSet<>();
     private String img;
     
-    public void anime(String nameEN, String nameJP, String nameCH,
+    public void Anime(String nameEN, String nameJP, String nameCH,
             int episodesTotal, LocalDate release) {
         this.nameEN = nameEN;
         this.nameJP = nameJP;

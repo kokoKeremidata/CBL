@@ -6,7 +6,7 @@ public class Watchlist {
     private String name;
     private List<Anime> anime = new ArrayList<>();
     
-    public void watchlist(String name){
+    public void Watchlist(String name){
         this.name = name;
     }
     public void addAnime(Anime anime){
