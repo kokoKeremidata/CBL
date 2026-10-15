@@ -1,16 +1,48 @@
 package src;
+
 import javax.swing.*;
+import java.awt.event.*;
+import java.io.IOException;
+import java.util.List;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Locale;
 
 public class MainFrame extends javax.swing.JFrame {
     
     private static final String APP_FONT = "Monospaced";
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
+    private AnimeDatabase db;
+    private JPanel animeGridPanel;
     /**
      * Creates new form NewJFrame
      */
     public MainFrame() {
         initComponents();
         setupMainLayout();
+        
+        try {
+            db = DatabaseHandler.load();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Could not load the anime database.",
+                    "Database Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+        if (db.getAllAnime().isEmpty()) {
+            seedAnimeDatabase(db);
+            try {
+                DatabaseHandler.save(db);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        refreshAnimeCards();
 
         setTitle("Anime Watchlist Manager");
         setSize(1000, 650);
@@ -131,9 +163,261 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
-        // TODO add your handling code here:
+        refreshAnimeCards();
     }//GEN-LAST:event_jTextField1ActionPerformed
+    
+    private void seedAnimeDatabase(AnimeDatabase database) {
+        database.addAnime(new Anime(
+            "Frieren: Beyond Journey's End",
+            "葬送のフリーレン",
+            "葬送的芙莉莲",
+            28, LocalDate.of(2023, 9, 29), "Madhouse"
+        ));
 
+        database.addAnime(new Anime(
+            "Spy x Family",
+            "SPY×FAMILY",
+            "间谍过家家",
+            37, LocalDate.of(2022, 4, 9), "Wit Studio"
+        ));
+
+        database.addAnime(new Anime(
+            "Jujutsu Kaisen",
+            "呪術廻戦",
+            "咒术回战",
+            47, LocalDate.of(2020, 10, 3), "MAPPA"
+        ));
+
+        database.addAnime(new Anime(
+            "Demon Slayer",
+            "鬼滅の刃",
+            "鬼灭之刃",
+            26, LocalDate.of(2019, 4, 6), "ufotable"
+        ));
+
+        database.addAnime(new Anime(
+            "Attack on Titan",
+            "進撃の巨人",
+            "进击的巨人",
+            25, LocalDate.of(2013, 4, 7), "Wit Studio"
+        ));
+
+        database.addAnime(new Anime(
+            "Death Note",
+            "デスノート",
+            "死亡笔记",
+            37, LocalDate.of(2006, 10, 4), "Madhouse"
+        ));
+
+        database.addAnime(new Anime(
+            "Fullmetal Alchemist: Brotherhood",
+            "鋼の錬金術師 FULLMETAL ALCHEMIST",
+            "钢之炼金术师FA",
+            64, LocalDate.of(2009, 4, 5), "Bones"
+        ));
+
+        database.addAnime(new Anime(
+            "Haikyu!!",
+            "ハイキュー!!",
+            "排球少年!!",
+            25, LocalDate.of(2014, 4, 6), "Production I.G"
+        ));
+
+        database.addAnime(new Anime(
+            "Kaguya-sama: Love Is War",
+            "かぐや様は告らせたい",
+            "辉夜大小姐想让我告白",
+            12, LocalDate.of(2019, 1, 12), "A-1 Pictures"
+        ));
+
+        database.addAnime(new Anime(
+            "One Punch Man",
+            "ワンパンマン",
+            "一拳超人",
+            12, LocalDate.of(2015, 10, 5), "Madhouse"
+        ));
+        database.addAnime(new Anime(
+            "Naruto", "ナルト", "火影忍者",
+            220, LocalDate.of(2002, 10, 3), "Pierrot"
+        ));
+        database.addAnime(new Anime(
+            "One Piece", "ワンピース", "海贼王",
+            1000, LocalDate.of(1999, 10, 20), "Toei Animation"
+        ));
+        database.addAnime(new Anime(
+            "Bleach", "BLEACH", "死神",
+            366, LocalDate.of(2004, 10, 5), "Pierrot"
+        ));
+        database.addAnime(new Anime(
+            "My Hero Academia", "僕のヒーローアカデミア", "我的英雄学院",
+            159, LocalDate.of(2016, 4, 3), "Bones"
+        ));
+        database.addAnime(new Anime(
+            "Hunter x Hunter", "HUNTER×HUNTER", "全职猎人",
+            148, LocalDate.of(2011, 10, 2), "Madhouse"
+        ));
+        database.addAnime(new Anime(
+            "Tokyo Ghoul", "東京喰種トーキョーグール", "东京喰种",
+            12, LocalDate.of(2014, 7, 4), "Pierrot"
+        ));
+        database.addAnime(new Anime(
+            "Chainsaw Man", "チェンソーマン", "链锯人",
+            12, LocalDate.of(2022, 10, 12), "MAPPA"
+        ));
+        database.addAnime(new Anime(
+            "Mob Psycho 100", "モブサイコ100", "灵能百分百",
+            12, LocalDate.of(2016, 7, 12), "Bones"
+        ));
+        database.addAnime(new Anime(
+            "Dr. Stone", "Dr.STONE", "石纪元",
+            24, LocalDate.of(2019, 7, 5), "TMS Entertainment"
+        ));
+        database.addAnime(new Anime(
+            "Black Clover", "ブラッククローバー", "黑色五叶草",
+            170, LocalDate.of(2017, 10, 3), "Pierrot"
+        ));
+
+        database.addAnime(new Anime(
+            "Steins;Gate", "シュタインズ・ゲート", "命运石之门",
+            24, LocalDate.of(2011, 4, 6), "White Fox"
+        ));
+        database.addAnime(new Anime(
+            "Code Geass", "コードギアス 反逆のルルーシュ", "反叛的鲁路修",
+            25, LocalDate.of(2006, 10, 6), "Sunrise"
+        ));
+        database.addAnime(new Anime(
+            "Cowboy Bebop", "カウボーイビバップ", "星际牛仔",
+            26, LocalDate.of(1998, 4, 3), "Sunrise"
+        ));
+        database.addAnime(new Anime(
+            "Neon Genesis Evangelion", "新世紀エヴァンゲリオン", "新世纪福音战士",
+            26, LocalDate.of(1995, 10, 4), "Gainax"
+        ));
+        database.addAnime(new Anime(
+            "Psycho-Pass", "PSYCHO-PASS サイコパス", "心理测量者",
+            22, LocalDate.of(2012, 10, 12), "Production I.G"
+        ));
+        database.addAnime(new Anime(
+            "Erased", "僕だけがいない街", "只有我不存在的城市",
+            12, LocalDate.of(2016, 1, 8), "A-1 Pictures"
+        ));
+        database.addAnime(new Anime(
+            "Parasyte: The Maxim", "寄生獣 セイの格率", "寄生兽 生命的准则",
+            24, LocalDate.of(2014, 10, 9), "Madhouse"
+        ));
+        database.addAnime(new Anime(
+            "The Promised Neverland", "約束のネバーランド", "约定的梦幻岛",
+            12, LocalDate.of(2019, 1, 11), "CloverWorks"
+        ));
+        database.addAnime(new Anime(
+            "Made in Abyss", "メイドインアビス", "来自深渊",
+            13, LocalDate.of(2017, 7, 7), "Kinema Citrus"
+        ));
+        database.addAnime(new Anime(
+            "Vinland Saga", "ヴィンランド・サガ", "冰海战记",
+            24, LocalDate.of(2019, 7, 8), "Wit Studio"
+        ));
+
+        database.addAnime(new Anime(
+            "Your Lie in April", "四月は君の嘘", "四月是你的谎言",
+            22, LocalDate.of(2014, 10, 10), "A-1 Pictures"
+        ));
+        database.addAnime(new Anime(
+            "Clannad", "CLANNAD", "团子大家族",
+            23, LocalDate.of(2007, 10, 5), "Kyoto Animation"
+        ));
+        database.addAnime(new Anime(
+            "Toradora!", "とらドラ！", "龙与虎",
+            25, LocalDate.of(2008, 10, 2), "J.C.Staff"
+        ));
+        database.addAnime(new Anime(
+            "Fruits Basket", "フルーツバスケット", "水果篮子",
+            25, LocalDate.of(2019, 4, 6), "TMS Entertainment"
+        ));
+        database.addAnime(new Anime(
+            "Violet Evergarden", "ヴァイオレット・エヴァーガーデン", "紫罗兰永恒花园",
+            13, LocalDate.of(2018, 1, 11), "Kyoto Animation"
+        ));
+        database.addAnime(new Anime(
+            "Bocchi the Rock!", "ぼっち・ざ・ろっく！", "孤独摇滚！",
+            12, LocalDate.of(2022, 10, 9), "CloverWorks"
+        ));
+        database.addAnime(new Anime(
+            "K-On!", "けいおん！", "轻音少女",
+            13, LocalDate.of(2009, 4, 3), "Kyoto Animation"
+        ));
+        database.addAnime(new Anime(
+            "Hyouka", "氷菓", "冰菓",
+            22, LocalDate.of(2012, 4, 22), "Kyoto Animation"
+        ));
+        database.addAnime(new Anime(
+            "March Comes in Like a Lion", "3月のライオン", "三月的狮子",
+            22, LocalDate.of(2016, 10, 8), "Shaft"
+        ));
+        database.addAnime(new Anime(
+            "Horimiya", "ホリミヤ", "堀与宫村",
+            13, LocalDate.of(2021, 1, 10), "CloverWorks"
+        ));
+
+        database.addAnime(new Anime(
+            "Re:Zero", "Re:ゼロから始める異世界生活", "Re：从零开始的异世界生活",
+            25, LocalDate.of(2016, 4, 4), "White Fox"
+        ));
+        database.addAnime(new Anime(
+            "Mushoku Tensei: Jobless Reincarnation", "無職転生 ～異世界行ったら本気だす～", "无职转生",
+            23, LocalDate.of(2021, 1, 11), "Studio Bind"
+        ));
+        database.addAnime(new Anime(
+            "That Time I Got Reincarnated as a Slime", "転生したらスライムだった件", "关于我转生变成史莱姆这档事",
+            24, LocalDate.of(2018, 10, 2), "8bit"
+        ));
+        database.addAnime(new Anime(
+            "Overlord", "オーバーロード", "不死者之王",
+            13, LocalDate.of(2015, 7, 7), "Madhouse"
+        ));
+        database.addAnime(new Anime(
+            "Konosuba", "この素晴らしい世界に祝福を！", "为美好的世界献上祝福！",
+            10, LocalDate.of(2016, 1, 14), "Studio Deen"
+        ));
+        database.addAnime(new Anime(
+            "The Rising of the Shield Hero", "盾の勇者の成り上がり", "盾之勇者成名录",
+            25, LocalDate.of(2019, 1, 9), "Kinema Citrus"
+        ));
+        database.addAnime(new Anime(
+            "Sword Art Online", "ソードアート・オンライン", "刀剑神域",
+            25, LocalDate.of(2012, 7, 8), "A-1 Pictures"
+        ));
+        database.addAnime(new Anime(
+            "Log Horizon", "ログ・ホライズン", "记录的地平线",
+            25, LocalDate.of(2013, 10, 5), "Satelight"
+        ));
+        database.addAnime(new Anime(
+            "The Ancient Magus' Bride", "魔法使いの嫁", "魔法使的新娘",
+            24, LocalDate.of(2017, 10, 7), "Wit Studio"
+        ));
+        database.addAnime(new Anime(
+            "Delicious in Dungeon", "ダンジョン飯", "迷宫饭",
+            24, LocalDate.of(2024, 1, 4), "Trigger"
+        ));
+    }
+    
+    private void refreshAnimeCards() {
+        List<Anime> animeList = new ArrayList<>(db.getAllAnime());
+        List<Anime> filteredList = new ArrayList<>();
+        String search = jTextField1.getText().trim().toLowerCase(Locale.ROOT);
+        for(Anime a : animeList) {
+            if(a.getName(Lang.EN).toLowerCase().contains(search)) {
+                filteredList.add(a);
+            }
+        }
+        animeGridPanel.removeAll();
+        for (Anime a : filteredList) {
+            animeGridPanel.add(new AnimeCard(a.getName(Lang.EN)));
+        }
+        animeGridPanel.revalidate();
+        animeGridPanel.repaint();
+    }
+    
     private void setupMainLayout() {
         java.awt.Color background = java.awt.Color.decode("#211B38");
         java.awt.Color cardBackground = java.awt.Color.decode("#302840");
@@ -192,6 +476,22 @@ public class MainFrame extends javax.swing.JFrame {
         javax.swing.JButton addButton = new javax.swing.JButton("+ Add Anime");
         addButton.setBackground(accent);
         addButton.setForeground(java.awt.Color.decode("#211B38"));
+        addButton.addActionListener(e -> {
+            db.addAnime(new Anime(
+                "Blue Lock",
+                "ブルーロック",
+                "蓝色监狱",
+                24,
+                LocalDate.of(2022, 10, 9),
+                "Eight Bit"
+            ));
+            try {
+                DatabaseHandler.save(db);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+            refreshAnimeCards();
+        });
 
         header.add(titlePanel, java.awt.BorderLayout.CENTER);
         header.add(addButton, java.awt.BorderLayout.EAST);
@@ -208,6 +508,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         jButton1.setText("Search");
         jButton1.setPreferredSize(new java.awt.Dimension(85, 36));
+        jButton1.addActionListener(e -> refreshAnimeCards());
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(
             new String[] {
@@ -253,19 +554,14 @@ public class MainFrame extends javax.swing.JFrame {
 
         // Holding anime cards in a good manner by animeGridPanel
         // Automatically adjust to the available space
-        javax.swing.JPanel animeGridPanel = new javax.swing.JPanel(
+        animeGridPanel = new javax.swing.JPanel(
             new ResponsiveGridLayout()
         );
         animeGridPanel.setBackground(background);
         animeGridPanel.setBorder(
             javax.swing.BorderFactory.createEmptyBorder(4, 2, 12, 2)
         );
-
-        animeGridPanel.add(new AnimeCard("Frieren"));
-        animeGridPanel.add(new AnimeCard("Spy x Family"));
-        animeGridPanel.add(new AnimeCard("Jujutsu Kaisen"));
-        animeGridPanel.add(new AnimeCard("Maimai deluxe"));
-
+        
         jScrollPane1.setViewportView(animeGridPanel);
         jScrollPane1.setBorder(null);
         jScrollPane1.getViewport().setBackground(background);
