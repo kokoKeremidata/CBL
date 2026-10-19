@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.nio.file.Path;
 import java.io.Serializable;
+import java.util.Locale;
 enum Lang {
         EN, 
         JP, 
@@ -43,7 +44,7 @@ public class Anime implements Serializable {
     private int rating;
     private Status status;
     private Set<Genre> genres = new HashSet<>();
-    private String coverImgPath;
+    private String imagePath;
     private String studio;
     
     public Anime(String nameEN, String nameJP, String nameCH,
@@ -60,7 +61,7 @@ public class Anime implements Serializable {
             valid_input = false;
         if (episodesWatched >= episodesTotal || episodesWatched < 0)
             valid_input = false;
-        coverImgPath = "images/" + nameEN.toLowerCase() + ".jpg";
+        imagePath = AnimeImageFinder.findImage(nameEN);
     }
     
     public String getName(Lang l) {
@@ -98,6 +99,10 @@ public class Anime implements Serializable {
         return genres;
     }
     
+    public String getPath() {
+        return imagePath;
+    }
+    
     //Setters
     public void setNameEN(String n) {
         nameEN = n;
@@ -132,5 +137,27 @@ public class Anime implements Serializable {
     
     public void addGenre(Genre genre) {
         genres.add(genre);
+    }
+    
+    public void setPath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+    
+    //override methods to prevent duplicates
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Anime)) {
+            return false;
+        }
+        Anime other = (Anime) o;
+        return nameEN != null && nameEN.equalsIgnoreCase(other.getName(Lang.EN));
+    }
+    
+    @Override
+    public int hashCode() {
+        return nameEN == null ? 0 : nameEN.toLowerCase(Locale.ROOT).hashCode();
     }
 }

@@ -24,7 +24,7 @@ public class AnimeDatabase implements Serializable {
             return new ArrayList<>(allAnime);
         }
         //lowercase in root language
-        in.toLowerCase(Locale.ROOT).trim();
+        in = in.toLowerCase(Locale.ROOT).trim();
         //partial search
         for (Anime anime : allAnime) {
             for (Lang lang : Lang.values()) {
@@ -39,7 +39,22 @@ public class AnimeDatabase implements Serializable {
         return results;
     }
     
+    public Anime getAnimeByName(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        for (Anime a : allAnime) {
+            if (a.getName(Lang.EN).equalsIgnoreCase(name)) {
+                return a;
+            }
+        }
+        return null;
+    }
+    
     public List<Anime> getAnimeByStatus(Status status) {
+        if (status == null) {
+            return allAnime;
+        }
         List<Anime> results = new ArrayList<>();
         for (Anime anime : allAnime) {
             if (anime.getStatus() == status) {
