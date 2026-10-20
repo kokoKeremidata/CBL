@@ -16,9 +16,7 @@ public class DatabaseHandler {
     public static AnimeDatabase load() throws IOException, 
             ClassNotFoundException {
         File file = new File(file_name);
-        System.out.println(
-    new java.io.File("anime.dat").getAbsolutePath()
-);
+        System.out.println(new File("anime.dat").getAbsolutePath());
         if (!file.exists()) {
             AnimeDatabase db = new AnimeDatabase();
             save(db);

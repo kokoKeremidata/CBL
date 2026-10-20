@@ -83,7 +83,7 @@ public class Anime implements Serializable {
         return episodesWatched;
     }
     
-    public LocalDate getRelease() {
+    public LocalDate getDate() {
         return release;
     }
     
@@ -97,6 +97,10 @@ public class Anime implements Serializable {
     
     public Set<Genre> getGenres(){
         return genres;
+    }
+    
+    public String getStudio(){
+        return studio;
     }
     
     public String getPath() {
@@ -135,12 +139,20 @@ public class Anime implements Serializable {
         this.rating = rating;
     }
     
-    public void addGenre(Genre genre) {
-        genres.add(genre);
+    public void setDate(LocalDate releaase) {
+        this.release = release;
+    }
+    
+    public void setStudio(String studio) {
+        this.studio = studio;
     }
     
     public void setPath(String imagePath) {
         this.imagePath = imagePath;
+    }
+    
+    public void addGenre(Genre genre) {
+        genres.add(genre);
     }
     
     //override methods to prevent duplicates
