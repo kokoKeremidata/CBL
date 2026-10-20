@@ -1,16 +1,52 @@
 package src;
+
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.time.LocalDate;
 
 public class MainFrame extends javax.swing.JFrame {
     
     private static final String APP_FONT = "Monospaced";
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
+    private static final java.util.logging.Logger logger = 
+            java.util.logging.Logger.getLogger(MainFrame.class.getName());
+    private AnimeDatabase db;
+    private JPanel animeGridPanel;
+    private AnimeCard selectedCard;
     /**
      * Creates new form NewJFrame
      */
     public MainFrame() {
         initComponents();
+        jScrollPane1.getVerticalScrollBar().setUnitIncrement(40);
         setupMainLayout();
+        
+        try {
+            db = DatabaseHandler.load();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Could not load the anime database.",
+                    "Database Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+        if (db.getAllAnime().isEmpty()) {
+            seedAnimeDatabase(db);
+            try {
+                DatabaseHandler.save(db);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        refreshAnimeCards();
 
         setTitle("Anime Watchlist Manager");
         setSize(1000, 650);
@@ -131,176 +167,883 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
-        // TODO add your handling code here:
+        refreshAnimeCards();
     }//GEN-LAST:event_jTextField1ActionPerformed
+    
+    private void seedAnimeDatabase(AnimeDatabase database) {
+        database.addAnime(new Anime(
+            "Frieren: Beyond Journey's End",
+            "葬送のフリーレン",
+            "葬送的芙莉莲",
+            28, LocalDate.of(2023, 9, 29), "Madhouse"
+        ));
+
+        database.addAnime(new Anime(
+            "Spy x Family",
+            "SPY×FAMILY",
+            "间谍过家家",
+            37, LocalDate.of(2022, 4, 9), "Wit Studio"
+        ));
+
+        database.addAnime(new Anime(
+            "Jujutsu Kaisen",
+            "呪術廻戦",
+            "咒术回战",
+            59, LocalDate.of(2020, 10, 3), "MAPPA"
+        ));
+
+        database.addAnime(new Anime(
+            "Demon Slayer",
+            "鬼滅の刃",
+            "鬼灭之刃",
+            26, LocalDate.of(2019, 4, 6), "ufotable"
+        ));
+
+        database.addAnime(new Anime(
+            "Attack on Titan",
+            "進撃の巨人",
+            "进击的巨人",
+            25, LocalDate.of(2013, 4, 7), "Wit Studio"
+        ));
+
+        database.addAnime(new Anime(
+            "Death Note",
+            "デスノート",
+            "死亡笔记",
+            37, LocalDate.of(2006, 10, 4), "Madhouse"
+        ));
+
+        database.addAnime(new Anime(
+            "Fullmetal Alchemist: Brotherhood",
+            "鋼の錬金術師 FULLMETAL ALCHEMIST",
+            "钢之炼金术师FA",
+            64, LocalDate.of(2009, 4, 5), "Bones"
+        ));
+
+        database.addAnime(new Anime(
+            "Haikyu!!",
+            "ハイキュー!!",
+            "排球少年!!",
+            25, LocalDate.of(2014, 4, 6), "Production I.G"
+        ));
+
+        database.addAnime(new Anime(
+            "Kaguya-sama: Love Is War",
+            "かぐや様は告らせたい",
+            "辉夜大小姐想让我告白",
+            12, LocalDate.of(2019, 1, 12), "A-1 Pictures"
+        ));
+
+        database.addAnime(new Anime(
+            "One Punch Man",
+            "ワンパンマン",
+            "一拳超人",
+            12, LocalDate.of(2015, 10, 5), "Madhouse"
+        ));
+        database.addAnime(new Anime(
+            "Naruto", "ナルト", "火影忍者",
+            220, LocalDate.of(2002, 10, 3), "Pierrot"
+        ));
+        database.addAnime(new Anime(
+            "One Piece", "ワンピース", "海贼王",
+            1000, LocalDate.of(1999, 10, 20), "Toei Animation"
+        ));
+        database.addAnime(new Anime(
+            "Bleach", "BLEACH", "死神",
+            366, LocalDate.of(2004, 10, 5), "Pierrot"
+        ));
+        database.addAnime(new Anime(
+            "My Hero Academia", "僕のヒーローアカデミア", "我的英雄学院",
+            159, LocalDate.of(2016, 4, 3), "Bones"
+        ));
+        database.addAnime(new Anime(
+            "Hunter x Hunter", "HUNTER×HUNTER", "全职猎人",
+            148, LocalDate.of(2011, 10, 2), "Madhouse"
+        ));
+        database.addAnime(new Anime(
+            "Tokyo Ghoul", "東京喰種トーキョーグール", "东京喰种",
+            12, LocalDate.of(2014, 7, 4), "Pierrot"
+        ));
+        database.addAnime(new Anime(
+            "Chainsaw Man", "チェンソーマン", "链锯人",
+            12, LocalDate.of(2022, 10, 12), "MAPPA"
+        ));
+        database.addAnime(new Anime(
+            "Mob Psycho 100", "モブサイコ100", "灵能百分百",
+            12, LocalDate.of(2016, 7, 12), "Bones"
+        ));
+        database.addAnime(new Anime(
+            "Dr. Stone", "Dr.STONE", "石纪元",
+            24, LocalDate.of(2019, 7, 5), "TMS Entertainment"
+        ));
+        database.addAnime(new Anime(
+            "Black Clover", "ブラッククローバー", "黑色五叶草",
+            170, LocalDate.of(2017, 10, 3), "Pierrot"
+        ));
+
+        database.addAnime(new Anime(
+            "Steins;Gate", "シュタインズ・ゲート", "命运石之门",
+            24, LocalDate.of(2011, 4, 6), "White Fox"
+        ));
+        database.addAnime(new Anime(
+            "Code Geass", "コードギアス 反逆のルルーシュ", "反叛的鲁路修",
+            25, LocalDate.of(2006, 10, 6), "Sunrise"
+        ));
+        database.addAnime(new Anime(
+            "Cowboy Bebop", "カウボーイビバップ", "星际牛仔",
+            26, LocalDate.of(1998, 4, 3), "Sunrise"
+        ));
+        database.addAnime(new Anime(
+            "Neon Genesis Evangelion", "新世紀エヴァンゲリオン", "新世纪福音战士",
+            26, LocalDate.of(1995, 10, 4), "Gainax"
+        ));
+        database.addAnime(new Anime(
+            "Psycho-Pass", "PSYCHO-PASS サイコパス", "心理测量者",
+            22, LocalDate.of(2012, 10, 12), "Production I.G"
+        ));
+        database.addAnime(new Anime(
+            "Erased", "僕だけがいない街", "只有我不存在的城市",
+            12, LocalDate.of(2016, 1, 8), "A-1 Pictures"
+        ));
+        database.addAnime(new Anime(
+            "Parasyte: The Maxim", "寄生獣 セイの格率", "寄生兽 生命的准则",
+            24, LocalDate.of(2014, 10, 9), "Madhouse"
+        ));
+        database.addAnime(new Anime(
+            "The Promised Neverland", "約束のネバーランド", "约定的梦幻岛",
+            12, LocalDate.of(2019, 1, 11), "CloverWorks"
+        ));
+        database.addAnime(new Anime(
+            "Made in Abyss", "メイドインアビス", "来自深渊",
+            13, LocalDate.of(2017, 7, 7), "Kinema Citrus"
+        ));
+        database.addAnime(new Anime(
+            "Vinland Saga", "ヴィンランド・サガ", "冰海战记",
+            24, LocalDate.of(2019, 7, 8), "Wit Studio"
+        ));
+
+        database.addAnime(new Anime(
+            "Your Lie in April", "四月は君の嘘", "四月是你的谎言",
+            22, LocalDate.of(2014, 10, 10), "A-1 Pictures"
+        ));
+        database.addAnime(new Anime(
+            "Clannad", "CLANNAD", "团子大家族",
+            23, LocalDate.of(2007, 10, 5), "Kyoto Animation"
+        ));
+        database.addAnime(new Anime(
+            "Toradora!", "とらドラ！", "龙与虎",
+            25, LocalDate.of(2008, 10, 2), "J.C.Staff"
+        ));
+        database.addAnime(new Anime(
+            "Fruits Basket", "フルーツバスケット", "水果篮子",
+            25, LocalDate.of(2019, 4, 6), "TMS Entertainment"
+        ));
+        database.addAnime(new Anime(
+            "Violet Evergarden", "ヴァイオレット・エヴァーガーデン", "紫罗兰永恒花园",
+            13, LocalDate.of(2018, 1, 11), "Kyoto Animation"
+        ));
+        database.addAnime(new Anime(
+            "Bocchi the Rock!", "ぼっち・ざ・ろっく！", "孤独摇滚！",
+            12, LocalDate.of(2022, 10, 9), "CloverWorks"
+        ));
+        database.addAnime(new Anime(
+            "K-On!", "けいおん！", "轻音少女",
+            13, LocalDate.of(2009, 4, 3), "Kyoto Animation"
+        ));
+        database.addAnime(new Anime(
+            "Hyouka", "氷菓", "冰菓",
+            22, LocalDate.of(2012, 4, 22), "Kyoto Animation"
+        ));
+        database.addAnime(new Anime(
+            "March Comes in Like a Lion", "3月のライオン", "三月的狮子",
+            22, LocalDate.of(2016, 10, 8), "Shaft"
+        ));
+        database.addAnime(new Anime(
+            "Horimiya", "ホリミヤ", "堀与宫村",
+            13, LocalDate.of(2021, 1, 10), "CloverWorks"
+        ));
+
+        database.addAnime(new Anime(
+            "Re:Zero", "Re:ゼロから始める異世界生活", "Re：从零开始的异世界生活",
+            25, LocalDate.of(2016, 4, 4), "White Fox"
+        ));
+        database.addAnime(new Anime(
+            "Mushoku Tensei: Jobless Reincarnation", "無職転生 ～異世界行ったら本気だす～", "无职转生",
+            23, LocalDate.of(2021, 1, 11), "Studio Bind"
+        ));
+        database.addAnime(new Anime(
+            "That Time I Got Reincarnated as a Slime", "転生したらスライムだった件", "关于我转生变成史莱姆这档事",
+            24, LocalDate.of(2018, 10, 2), "8bit"
+        ));
+        database.addAnime(new Anime(
+            "Overlord", "オーバーロード", "不死者之王",
+            13, LocalDate.of(2015, 7, 7), "Madhouse"
+        ));
+        database.addAnime(new Anime(
+            "Konosuba", "この素晴らしい世界に祝福を！", "为美好的世界献上祝福！",
+            10, LocalDate.of(2016, 1, 14), "Studio Deen"
+        ));
+        database.addAnime(new Anime(
+            "The Rising of the Shield Hero", "盾の勇者の成り上がり", "盾之勇者成名录",
+            25, LocalDate.of(2019, 1, 9), "Kinema Citrus"
+        ));
+        database.addAnime(new Anime(
+            "Sword Art Online", "ソードアート・オンライン", "刀剑神域",
+            25, LocalDate.of(2012, 7, 8), "A-1 Pictures"
+        ));
+        database.addAnime(new Anime(
+            "Log Horizon", "ログ・ホライズン", "记录的地平线",
+            25, LocalDate.of(2013, 10, 5), "Satelight"
+        ));
+        database.addAnime(new Anime(
+            "The Ancient Magus' Bride", "魔法使いの嫁", "魔法使的新娘",
+            24, LocalDate.of(2017, 10, 7), "Wit Studio"
+        ));
+        database.addAnime(new Anime(
+            "Delicious in Dungeon", "ダンジョン飯", "迷宫饭",
+            24, LocalDate.of(2024, 1, 4), "Trigger"
+        ));
+    }
+    
+    private Status getStatusFromString(String selected) {
+        switch (selected) {
+            case "Not Watched":
+                return Status.NOT_WATCHED;
+            case "Plan to Watch":
+                return Status.PLAN_TO_WATCH;
+            case "Watching":
+                return Status.WATCHING;
+            case "Completed":
+                return Status.COMPLETED;
+            case "On Hold":
+                return Status.ON_HOLD;
+            case "Dropped":
+                return Status.DROPPED;
+            default:
+                return null;
+        }
+    }
+    
+    private void refreshAnimeCards() {
+        List<Anime> filteredList = new ArrayList<>();
+        String search = jTextField1.getText().trim().toLowerCase(Locale.ROOT);
+        String selected = (String) jComboBox1.getSelectedItem();
+        Status status = getStatusFromString(selected);
+        //filter anime
+        filteredList = db.searchAnime(search);
+        if (status != null) {
+            List<Anime> statusFilteredList = new ArrayList<>();
+            for (Anime a : filteredList) {
+                if (a.getStatus() == status) {
+                    statusFilteredList.add(a);
+                }
+            }
+            filteredList = statusFilteredList;
+        }
+        
+        //refresh cards + selection
+        animeGridPanel.removeAll();
+        for (Anime a : filteredList) {
+            AnimeCard card = new AnimeCard(a);
+            card.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (selectedCard != null) {
+                        selectedCard.setSelected(false);
+                    }
+                    selectedCard = card;
+                    selectedCard.setSelected(true);
+                }
+            });
+            animeGridPanel.add(card);
+            animeGridPanel.revalidate();
+            animeGridPanel.repaint();
+        }
+    }
+    
+    private int applyPopupTheme(
+            Object content, String title, int messageType, int optionType) {
+
+        Color background = Color.decode("#211B38");
+        Color accent = Color.decode("#C4B5FD");
+        Color foreground = Color.WHITE;
+        
+        UIManager.put("OptionPane.background", background);
+        UIManager.put("OptionPane.foreground", foreground);
+        UIManager.put("OptionPane.messageForeground", foreground);
+        UIManager.put("OptionPane.buttonAreaBackground", background);
+        UIManager.put("Panel.background", background);
+        UIManager.put("Button.background", accent);
+        UIManager.put("Button.foreground", background);
+        UIManager.put("Button.font", new Font(APP_FONT, Font.BOLD, 12));
+
+        JOptionPane pane = new JOptionPane(
+                content, messageType, optionType);
+
+        pane.setBackground(background);
+        pane.setForeground(foreground);
+        pane.setOpaque(true);
+
+        //style the message component if it is text
+        if (content instanceof String) {
+            JLabel message = new JLabel((String) content);
+            message.setForeground(foreground);
+            message.setFont(new Font(APP_FONT, Font.PLAIN, 13));
+            pane.setMessage(message);
+        }
+
+        JDialog dialog = pane.createDialog(this, title);
+        dialog.getContentPane().setBackground(background);
+
+        //style the popup components.
+        stylePopupComponents(dialog.getContentPane(),
+                background, accent, foreground);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+        Object result = pane.getValue();
+        dialog.dispose();
+
+        if (result instanceof Integer) {
+            return (Integer) result;
+        }
+
+        return JOptionPane.CLOSED_OPTION;
+    }
+
+    private void stylePopupComponents(
+            Container container,
+            Color background,
+            Color accent,
+            Color foreground) {
+
+        container.setBackground(background);
+
+        for (Component component : container.getComponents()) {
+
+            if (component instanceof JButton) {
+                JButton button = (JButton) component;
+                button.setBackground(accent);
+                button.setForeground(background);
+                button.setFont(new Font(APP_FONT, Font.BOLD, 12));
+                button.setOpaque(true);
+
+            } else if (component instanceof JLabel) {
+                JLabel label = (JLabel) component;
+                label.setBackground(background);
+                label.setForeground(foreground);
+                label.setFont(new Font(APP_FONT, Font.PLAIN, 13));
+
+            } else if (component instanceof JPanel) {
+                component.setBackground(background);
+                component.setForeground(foreground);
+            }
+
+            if (component instanceof Container) {
+                stylePopupComponents(
+                        (Container) component,
+                        background, accent, foreground);
+            }
+        }
+    }
 
     private void setupMainLayout() {
-        java.awt.Color background = java.awt.Color.decode("#211B38");
-        java.awt.Color cardBackground = java.awt.Color.decode("#302840");
-        java.awt.Color accent = java.awt.Color.decode("#C4B5FD");
-        java.awt.Color foreground = java.awt.Color.WHITE;
+        Color background = Color.decode("#211B38");
+        Color cardBackground = Color.decode("#302840");
+        Color accent = Color.decode("#C4B5FD");
+        Color foreground = Color.WHITE;
 
         // Reuse the panels to avoid clash issues
         jPanel1.removeAll();
         jPanel2.removeAll();
 
         // Main window layout
-        getContentPane().setLayout(new java.awt.BorderLayout(12, 0));
+        getContentPane().setLayout(new BorderLayout(12, 0));
         getContentPane().setBackground(background);
 
-        jPanel1.setLayout(new java.awt.BorderLayout(0, 16));
+        jPanel1.setLayout(new BorderLayout(0, 16));
         jPanel1.setBackground(background);
         jPanel1.setBorder(
-            javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 8)
+            BorderFactory.createEmptyBorder(20, 20, 20, 8)
         );
 
-        jPanel2.setLayout(new java.awt.BorderLayout(0, 12));
+        jPanel2.setLayout(new BorderLayout(0, 12));
         jPanel2.setBackground(cardBackground);
-        jPanel2.setPreferredSize(new java.awt.Dimension(245, 0));
+        jPanel2.setPreferredSize(new Dimension(245, 0));
         jPanel2.setBorder(
-            javax.swing.BorderFactory.createEmptyBorder(18, 14, 18, 14)
+            BorderFactory.createEmptyBorder(18, 14, 18, 14)
         );
 
         // Header
-        javax.swing.JPanel header = new javax.swing.JPanel(
-            new java.awt.BorderLayout()
+        JPanel header = new JPanel(
+            new BorderLayout()
         );
         header.setBackground(background);
 
-        javax.swing.JPanel titlePanel = new javax.swing.JPanel(
-            new java.awt.GridLayout(2, 1, 0, 4)
+        JPanel titlePanel = new JPanel(
+            new GridLayout(2, 1, 0, 4)
         );
         titlePanel.setBackground(background);
 
-        javax.swing.JLabel titleLabel =
-            new javax.swing.JLabel("Anime Watchlist Manager");
+        JLabel titleLabel =
+            new JLabel("Anime Watchlist Manager");
         titleLabel.setForeground(foreground);
         titleLabel.setFont(new java.awt.Font(
-            APP_FONT, java.awt.Font.BOLD, 24
+            APP_FONT, Font.BOLD, 24
         ));
 
-        javax.swing.JLabel subtitleLabel =
-            new javax.swing.JLabel("Your personal anime library");
+        JLabel subtitleLabel =
+            new JLabel("Your personal anime library");
         subtitleLabel.setForeground(accent);
         subtitleLabel.setFont(new java.awt.Font(
-            APP_FONT, java.awt.Font.PLAIN, 13
+            APP_FONT, Font.PLAIN, 13
         ));
+        
+        JPanel buttonPanel = new JPanel(
+            new java.awt.GridLayout(1, 2, 8, 0)
+        );
+        buttonPanel.setOpaque(false);
 
         titlePanel.add(titleLabel);
         titlePanel.add(subtitleLabel);
 
-        javax.swing.JButton addButton = new javax.swing.JButton("+ Add Anime");
+        JButton addButton = new JButton("+ Add Anime");
         addButton.setBackground(accent);
-        addButton.setForeground(java.awt.Color.decode("#211B38"));
+        addButton.setForeground(Color.decode("#211B38"));
+        addButton.addActionListener(e -> {
 
-        header.add(titlePanel, java.awt.BorderLayout.CENTER);
-        header.add(addButton, java.awt.BorderLayout.EAST);
+            JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+            form.setBackground(background);
+
+            JTextField englishField = new JTextField();
+            JTextField japaneseField = new JTextField();
+            JTextField chineseField = new JTextField();
+            JTextField episodesField = new JTextField();
+            JTextField releaseDateField = new JTextField("2026-01-01");
+            JTextField studioField = new JTextField();
+            String[] selectedPosterPath = {null};
+
+            JTextField[] fields = {
+                englishField, japaneseField, chineseField,
+                episodesField, releaseDateField, studioField
+            };
+
+            String[] labels = {
+                "English Title:", "Japanese Title:", "Chinese Title:",
+                "Total Episodes:", "Release Date (YYYY-MM-DD):", "Studio:"
+            };
+
+            for (int i = 0; i < labels.length; i++) {
+                JLabel label = new JLabel(labels[i]);
+                label.setForeground(Color.WHITE);
+                label.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+                fields[i].setBackground(Color.decode("#302840"));
+                fields[i].setForeground(Color.WHITE);
+                fields[i].setCaretColor(accent);
+                fields[i].setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+                form.add(label);
+                form.add(fields[i]);
+            }
+            
+            JLabel posterLabel = new JLabel("Poster:");
+            posterLabel.setForeground(Color.WHITE);
+
+            JButton posterButton = new JButton("Add Poster");
+            posterButton.setBackground(accent);
+            posterButton.setForeground(Color.decode("#211B38"));
+            posterButton.addActionListener(ev -> {
+                JFileChooser chooser = new JFileChooser("Choose Anime Poster:");
+                chooser.setFileFilter(new javax.swing.filechooser.
+                        FileNameExtensionFilter(
+                                "Image files", "jpg", "jpeg", "png"
+                        )
+                );
+                int result = chooser.showOpenDialog(this);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    java.io.File file = chooser.getSelectedFile();
+                    selectedPosterPath[0] = file.getAbsolutePath();
+                    posterButton.setText("Poster Selected");
+                }
+            });
+
+            form.add(posterLabel);
+            form.add(posterButton);
+
+            int choice = applyPopupTheme(
+                form,
+                "Add Anime",
+                JOptionPane.PLAIN_MESSAGE,
+                JOptionPane.OK_CANCEL_OPTION
+            );
+
+            if (choice != JOptionPane.OK_OPTION) {
+                return;
+            }
+
+            try {
+                String english = englishField.getText().trim();
+                String japanese = japaneseField.getText().trim();
+                String chinese = chineseField.getText().trim();
+                int episodes = Integer.parseInt(episodesField.getText().trim());
+                LocalDate releaseDate =
+                    LocalDate.parse(releaseDateField.getText().trim());
+                String studio = studioField.getText().trim();
+
+                if (english.isEmpty() || episodes <= 0 || studio.isEmpty()) {
+                    applyPopupTheme(
+                        "Enter an English title, "
+                                + "a positive episode count, and a studio.",
+                        "Invalid Input",
+                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                    );
+                    return;
+                }
+
+                Anime anime = new Anime(
+                    english, japanese, chinese, episodes, releaseDate, studio
+                );
+                if (selectedPosterPath[0] != null) {
+                    anime.setPath(selectedPosterPath[0]);
+                }
+
+                db.addAnime(anime);
+                DatabaseHandler.save(db);
+                refreshAnimeCards();
+
+                applyPopupTheme(
+                    "Anime added successfully!",
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+
+            } catch (NumberFormatException ex) {
+                applyPopupTheme(
+                    "Episode count must be a whole number.",
+                    "Invalid Input",
+                    JOptionPane.ERROR_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+            } catch (java.time.format.DateTimeParseException ex) {
+                applyPopupTheme(
+                    "Enter the date in YYYY-MM-DD format.",
+                    "Invalid Date",
+                    JOptionPane.ERROR_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+            } catch (IOException ex) {
+                applyPopupTheme(
+                    "Could not save the database.",
+                    "Save Error",
+                    JOptionPane.ERROR_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+                ex.printStackTrace();
+            }
+        });
+        
+        JButton editButton = new JButton("Edit Anime");
+        editButton.setBackground(accent);
+        editButton.setForeground(Color.decode("#211B38"));
+        editButton.addActionListener(e -> {
+            if (selectedCard == null) {
+                    applyPopupTheme(
+                        "Please select an anime to edit.",
+                        "No Anime Selected",
+                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                    );
+                    return;
+            }
+            Anime selected = db.getAnimeByName(selectedCard.getAnimeName());
+            JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+            form.setBackground(background);
+
+            JTextField englishField = new JTextField(selected.getName(Lang.EN));
+            JTextField japaneseField = 
+                    new JTextField(selected.getName(Lang.JP));
+            JTextField chineseField = new JTextField(selected.getName(Lang.CH));
+            JTextField episodesField = 
+                    new JTextField(String.valueOf(selected.getEpT()));
+            JTextField releaseDateField = 
+                    new JTextField(selected.getDate().toString());
+            JTextField studioField = new JTextField(selected.getStudio());
+            String[] selectedPosterPath = {null};
+
+            JTextField[] fields = {
+                englishField, japaneseField, chineseField,
+                episodesField, releaseDateField, studioField
+            };
+
+            String[] labels = {
+                "English Title:", "Japanese Title:", "Chinese Title:",
+                "Total Episodes:", "Release Date (YYYY-MM-DD):", "Studio:"
+            };
+
+            for (int i = 0; i < labels.length; i++) {
+                JLabel label = new JLabel(labels[i]);
+                label.setForeground(Color.WHITE);
+                label.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+                fields[i].setBackground(Color.decode("#302840"));
+                fields[i].setForeground(Color.WHITE);
+                fields[i].setCaretColor(accent);
+                fields[i].setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+                form.add(label);
+                form.add(fields[i]);
+            }
+            
+            JLabel posterLabel = new JLabel("Poster:");
+            posterLabel.setForeground(Color.WHITE);
+
+            JButton posterButton = new JButton("Change Poster");
+            posterButton.setBackground(accent);
+            posterButton.setForeground(Color.decode("#211B38"));
+            posterButton.addActionListener(ev -> {
+                JFileChooser chooser = new JFileChooser("Choose Anime Poster:");
+                chooser.setFileFilter(new javax.swing.filechooser.
+                        FileNameExtensionFilter(
+                                "Image files", "jpg", "jpeg", "png"
+                        )
+                );
+                int result = chooser.showOpenDialog(this);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    java.io.File file = chooser.getSelectedFile();
+                    selectedPosterPath[0] = file.getAbsolutePath();
+                    posterButton.setText("Poster Selected");
+                }
+            });
+
+            form.add(posterLabel);
+            form.add(posterButton);
+
+            int choice = applyPopupTheme(
+                form,
+                "Edit Anime",
+                JOptionPane.PLAIN_MESSAGE,
+                JOptionPane.OK_CANCEL_OPTION
+            );
+
+            if (choice != JOptionPane.OK_OPTION) {
+                return;
+            }
+
+            try {
+                String english = englishField.getText().trim();
+                String japanese = japaneseField.getText().trim();
+                String chinese = chineseField.getText().trim();
+                int episodes = Integer.parseInt(episodesField.getText().trim());
+                LocalDate releaseDate =
+                    LocalDate.parse(releaseDateField.getText().trim());
+                String studio = studioField.getText().trim();
+
+                if (english.isEmpty() || episodes <= 0 || studio.isEmpty()) {
+                    applyPopupTheme(
+                        "Enter an English title, a positive episode count,"
+                                + " and a studio.",
+                        "Invalid Input",
+                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                    );
+                    return;
+                }
+//
+                
+                selected.setNameEN(english);
+                selected.setNameJP(japanese);
+                selected.setNameCH(chinese);
+                selected.setEpT(episodes);
+                selected.setDate(releaseDate);
+                selected.setStudio(studio);
+                if (selectedPosterPath[0] != null) {
+                    selected.setPath(selectedPosterPath[0]);
+                }
+                
+                DatabaseHandler.save(db);
+                refreshAnimeCards();
+
+                applyPopupTheme(
+                    "Anime changes saved successfully!",
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+
+            } catch (NumberFormatException ex) {
+                applyPopupTheme(
+                    "Episode count must be a whole number.",
+                    "Invalid Input",
+                    JOptionPane.ERROR_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+            } catch (java.time.format.DateTimeParseException ex) {
+                applyPopupTheme(
+                    "Enter the date in YYYY-MM-DD format.",
+                    "Invalid Date",
+                    JOptionPane.ERROR_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+            } catch (IOException ex) {
+                applyPopupTheme(
+                    "Could not save the database.",
+                    "Save Error",
+                    JOptionPane.ERROR_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+                ex.printStackTrace();
+            }
+        });
+        
+        JButton removeButton = new JButton("- Remove Anime");
+        removeButton.setBackground(accent);
+        removeButton.setForeground(Color.decode("#211B38"));
+        removeButton.addActionListener(e -> {
+            if (selectedCard == null) {
+                applyPopupTheme(
+                    "Please select an anime to remove.",
+                    "No Anime Selected",
+                    JOptionPane.WARNING_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+                return;
+            }
+            Anime selected = db.getAnimeByName(selectedCard.getAnimeName());
+            int choice = applyPopupTheme(
+                    "Are you sure you want to remove \""
+                    + selectedCard.getAnimeName() + "\"?",
+                    "Confirm Removal",
+                    JOptionPane.WARNING_MESSAGE,
+                    JOptionPane.YES_NO_OPTION
+                );
+            if (choice == JOptionPane.YES_OPTION) {
+                db.removeAnime(selected);
+                try {
+                    DatabaseHandler.save(db);
+                } catch (IOException ex) {
+                    applyPopupTheme(
+                        "Changes could not be saved.",
+                        "Save Error",
+                        JOptionPane.ERROR_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                    );
+                    ex.printStackTrace();
+                }
+                selectedCard = null;
+                refreshAnimeCards();
+                
+                applyPopupTheme(
+                    "Anime removed successfully!",
+                    "Removal Successful",
+                    JOptionPane.INFORMATION_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+            }
+        });
+        
+        buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(removeButton);
+        
+        header.add(titlePanel, BorderLayout.CENTER);
+        header.add(buttonPanel, BorderLayout.EAST);
 
         // Search and filter bar
-        javax.swing.JPanel toolbar = new javax.swing.JPanel(
-            new java.awt.BorderLayout(8, 0)
-        );
+        JPanel toolbar = new JPanel(new BorderLayout(8, 0));
         toolbar.setBackground(background);
 
         jTextField1.setText("");
         jTextField1.setToolTipText("Search anime...");
-        jTextField1.setPreferredSize(new java.awt.Dimension(200, 36));
+        jTextField1.setPreferredSize(new Dimension(200, 36));
 
         jButton1.setText("Search");
-        jButton1.setPreferredSize(new java.awt.Dimension(85, 36));
+        jButton1.setPreferredSize(new Dimension(85, 36));
+        jButton1.addActionListener(e -> refreshAnimeCards());
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(
+        jComboBox1.setModel(new DefaultComboBoxModel<>(
             new String[] {
                 "All Anime",
                 "Watching",
                 "Completed",
                 "Plan to Watch",
                 "On Hold",
-                "Dropped"
+                "Dropped",
+                "Not Watched"
             }
         ));
 
         // Search field
-        toolbar.add(jTextField1, java.awt.BorderLayout.CENTER);
+        toolbar.add(jTextField1, BorderLayout.CENTER);
 
         // Search button
-        toolbar.add(jButton1, java.awt.BorderLayout.EAST);
+        toolbar.add(jButton1, BorderLayout.EAST);
 
         // Status filter, might be used as folder as well
-        toolbar.add(jComboBox1, java.awt.BorderLayout.WEST);
+        toolbar.add(jComboBox1, BorderLayout.WEST);
 
         // Collection section
-        javax.swing.JPanel collectionPanel = new javax.swing.JPanel(
-            new java.awt.BorderLayout(0, 12)
+        JPanel collectionPanel = new JPanel(
+            new BorderLayout(0, 12)
         );
         collectionPanel.setBackground(background);
 
-        javax.swing.JPanel collectionHeader = new javax.swing.JPanel(
-            new java.awt.BorderLayout()
+        JPanel collectionHeader = new JPanel(
+            new BorderLayout()
         );
         collectionHeader.setBackground(background);
 
-        javax.swing.JLabel collectionLabel =
-            new javax.swing.JLabel("My Collection");
+        JLabel collectionLabel =
+            new JLabel("My Collection");
         collectionLabel.setForeground(foreground);
-        collectionLabel.setFont(new java.awt.Font(
-            APP_FONT, java.awt.Font.BOLD, 18
-        ));
+        collectionLabel.setFont(new Font(APP_FONT, Font.BOLD, 18));
 
-        collectionHeader.add(
-            collectionLabel, java.awt.BorderLayout.WEST
-        );
+        collectionHeader.add(collectionLabel, BorderLayout.WEST);
 
         // Holding anime cards in a good manner by animeGridPanel
         // Automatically adjust to the available space
-        javax.swing.JPanel animeGridPanel = new javax.swing.JPanel(
-            new ResponsiveGridLayout()
-        );
+        animeGridPanel = new JPanel(new ResponsiveGridLayout());
         animeGridPanel.setBackground(background);
         animeGridPanel.setBorder(
-            javax.swing.BorderFactory.createEmptyBorder(4, 2, 12, 2)
+            BorderFactory.createEmptyBorder(4, 2, 12, 2)
         );
-
-        animeGridPanel.add(new AnimeCard("Frieren"));
-        animeGridPanel.add(new AnimeCard("Spy x Family"));
-        animeGridPanel.add(new AnimeCard("Jujutsu Kaisen"));
-        animeGridPanel.add(new AnimeCard("Maimai deluxe"));
-
+        
         jScrollPane1.setViewportView(animeGridPanel);
         jScrollPane1.setBorder(null);
         jScrollPane1.getViewport().setBackground(background);
 
         collectionPanel.add(
-            collectionHeader, java.awt.BorderLayout.NORTH
+            collectionHeader, BorderLayout.NORTH
         );
         collectionPanel.add(
-            jScrollPane1, java.awt.BorderLayout.CENTER
+            jScrollPane1, BorderLayout.CENTER
         );
 
         // Assemble the main area
-        javax.swing.JPanel leftContent = new javax.swing.JPanel(
-            new java.awt.BorderLayout(0, 18)
+        JPanel leftContent = new JPanel(
+            new BorderLayout(0, 18)
         );
         leftContent.setBackground(background);
-        leftContent.add(header, java.awt.BorderLayout.NORTH);
+        leftContent.add(header, BorderLayout.NORTH);
 
-        javax.swing.JPanel contentArea = new javax.swing.JPanel(
-            new java.awt.BorderLayout(0, 14)
+        JPanel contentArea = new JPanel(
+            new BorderLayout(0, 14)
         );
         contentArea.setBackground(background);
-        contentArea.add(toolbar, java.awt.BorderLayout.NORTH);
-        contentArea.add(collectionPanel, java.awt.BorderLayout.CENTER);
+        contentArea.add(toolbar, BorderLayout.NORTH);
+        contentArea.add(collectionPanel, BorderLayout.CENTER);
 
-        leftContent.add(contentArea, java.awt.BorderLayout.CENTER);
-        jPanel1.add(leftContent, java.awt.BorderLayout.CENTER);
+        leftContent.add(contentArea, BorderLayout.CENTER);
+        jPanel1.add(leftContent, BorderLayout.CENTER);
 
         // Watchlist sidebar
-        javax.swing.JLabel watchlistLabel =
-            new javax.swing.JLabel("WATCHLIST");
+        JLabel watchlistLabel = new JLabel("WATCHLIST");
         watchlistLabel.setForeground(foreground);
-        watchlistLabel.setFont(new java.awt.Font(
-            APP_FONT, java.awt.Font.BOLD, 16
-        ));
+        watchlistLabel.setFont(new Font(APP_FONT, Font.BOLD, 16));
 
         javax.swing.tree.DefaultMutableTreeNode root =
             new javax.swing.tree.DefaultMutableTreeNode("My Watchlist");
@@ -317,23 +1060,22 @@ public class MainFrame extends javax.swing.JFrame {
             root.add(new javax.swing.tree.DefaultMutableTreeNode(status));
         }
 
-        javax.swing.JTree watchlistTree =
-            new javax.swing.JTree(root);
+        JTree watchlistTree = new JTree(root);
         watchlistTree.setRootVisible(false);
         watchlistTree.setShowsRootHandles(true);
         watchlistTree.setBackground(cardBackground);
         watchlistTree.setForeground(foreground);
         watchlistTree.setBorder(
-            javax.swing.BorderFactory.createEmptyBorder(8, 4, 8, 4)
+            BorderFactory.createEmptyBorder(8, 4, 8, 4)
         );
 
-        javax.swing.JScrollPane watchlistScroll =
-            new javax.swing.JScrollPane(watchlistTree);
+        JScrollPane watchlistScroll =
+            new JScrollPane(watchlistTree);
         watchlistScroll.setBorder(null);
         watchlistScroll.getViewport().setBackground(cardBackground);
 
-        jPanel2.add(watchlistLabel, java.awt.BorderLayout.NORTH);
-        jPanel2.add(watchlistScroll, java.awt.BorderLayout.CENTER);
+        jPanel2.add(watchlistLabel, BorderLayout.NORTH);
+        jPanel2.add(watchlistScroll, BorderLayout.CENTER);
 
         // Hide the old action buttons for now.
         // Edit and Delete shall pop up when an anime is selected.
@@ -341,8 +1083,8 @@ public class MainFrame extends javax.swing.JFrame {
         jButton3.setVisible(false);
         jButton4.setVisible(false);
 
-        getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
-        getContentPane().add(jPanel2, java.awt.BorderLayout.EAST);
+        getContentPane().add(jPanel1, BorderLayout.CENTER);
+        getContentPane().add(jPanel2, BorderLayout.EAST);
 
         revalidate();
         repaint();

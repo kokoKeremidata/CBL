@@ -2,6 +2,9 @@ package src;
 import java.time.*;
 import java.util.Set;
 import java.util.HashSet;
+import java.nio.file.Path;
+import java.io.Serializable;
+import java.util.Locale;
 enum Lang {
         EN, 
         JP, 
@@ -22,6 +25,7 @@ enum Genre{
         Comedy
     }
 enum Status{
+        NOT_WATCHED,
         COMPLETED,
         WATCHING,        
         PLAN_TO_WATCH,
@@ -29,7 +33,8 @@ enum Status{
         DROPPED
     }
 
-public class Anime {
+public class Anime implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String nameEN;
     private String nameJP;
     private String nameCH;
@@ -39,20 +44,24 @@ public class Anime {
     private int rating;
     private Status status;
     private Set<Genre> genres = new HashSet<>();
-    private String coverImgPath;
+    private String imagePath;
+    private String studio;
     
-    public void Anime(String nameEN, String nameJP, String nameCH,
-            int episodesTotal, LocalDate release) {
+    public Anime(String nameEN, String nameJP, String nameCH,
+            int episodesTotal, LocalDate release, String studio) {
         this.nameEN = nameEN;
         this.nameJP = nameJP;
         this.nameCH = nameCH;
         this.episodesTotal = episodesTotal;
         this.release = release;
+        this.studio = studio;
+        this.status = Status.NOT_WATCHED;
         boolean valid_input = true;
         if (rating < 0 || rating > 10)
             valid_input = false;
         if (episodesWatched >= episodesTotal || episodesWatched < 0)
             valid_input = false;
+        imagePath = AnimeImageFinder.findImage(nameEN);
     }
     
     public String getName(Lang l) {
@@ -61,7 +70,8 @@ public class Anime {
             case JP -> nameJP;
             case CH -> nameCH;
         };
-        return name;
+        //if missing name in language fall back to english
+        return name != null ? name : nameEN; 
     }
     
     //Getters
@@ -73,7 +83,7 @@ public class Anime {
         return episodesWatched;
     }
     
-    public LocalDate getRelease() {
+    public LocalDate getDate() {
         return release;
     }
     
@@ -89,6 +99,14 @@ public class Anime {
         return genres;
     }
     
+    public String getStudio(){
+        return studio;
+    }
+    
+    public String getPath() {
+        return imagePath;
+    }
+    
     //Setters
     public void setNameEN(String n) {
         nameEN = n;
@@ -102,7 +120,7 @@ public class Anime {
     }
     
     public void setEpT(int ep) {
-        if (ep <= episodesWatched) {
+        if (ep >= episodesWatched && ep > 0) {
             episodesTotal = ep;
         }
     }
@@ -121,12 +139,37 @@ public class Anime {
         this.rating = rating;
     }
     
+    public void setDate(LocalDate releaase) {
+        this.release = release;
+    }
+    
+    public void setStudio(String studio) {
+        this.studio = studio;
+    }
+    
+    public void setPath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+    
     public void addGenre(Genre genre) {
         genres.add(genre);
     }
     
-    //Find poster img
-    public void assignPoster() {
-        
+    //override methods to prevent duplicates
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Anime)) {
+            return false;
+        }
+        Anime other = (Anime) o;
+        return nameEN != null && nameEN.equalsIgnoreCase(other.getName(Lang.EN));
+    }
+    
+    @Override
+    public int hashCode() {
+        return nameEN == null ? 0 : nameEN.toLowerCase(Locale.ROOT).hashCode();
     }
 }
