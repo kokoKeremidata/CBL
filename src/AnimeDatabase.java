@@ -12,6 +12,11 @@ public class AnimeDatabase implements Serializable {
     private List<Anime> allAnime = new ArrayList<>();
     private List<Watchlist> watchlists = new ArrayList<>();
     
+    //constructor with default watchlist
+    public AnimeDatabase() {
+        watchlists.add(new Watchlist("Favourites"));
+    }
+    
     //anime methods
     public List<Anime> getAllAnime() {
         return Collections.unmodifiableList(allAnime);
@@ -86,8 +91,9 @@ public class AnimeDatabase implements Serializable {
     }
     
     public void addWatchlist(Watchlist w) {
-        if (w == null || watchlists.contains(w)) {
-            System.out.println("watchlist already exists");
+        if (w == null || w.getName() == null
+            || w.getName().isBlank()
+            || findWatchlistByName(w.getName()) != null) {
             return;
         }
         watchlists.add(w);
@@ -107,5 +113,11 @@ public class AnimeDatabase implements Serializable {
             }
         }
         return null;
+    }
+    
+    public void ensureDefaultWatchlists() {
+        if (findWatchlistByName("Favourites") == null) {
+            watchlists.add(new Watchlist("Favourites"));
+        }
     }
 }

@@ -132,14 +132,27 @@ public class Anime implements Serializable {
             status = Status.COMPLETED;
     }
     public void setStatus(Status status) {
+        switch (status) {
+            case Status.COMPLETED :
+                setEpW(getEpT());
+                break;
+            case Status.NOT_WATCHED :
+                setEpW(0);
+                break;
+            case Status.PLAN_TO_WATCH :
+                setEpW(0);
+                break;
+        }
         this.status = status;
     }
     
     public void setRating(int rating) {
-        this.rating = rating;
+        if (rating >= 0 && rating <= 10) {
+            this.rating = rating;
+        }
     }
     
-    public void setDate(LocalDate releaase) {
+    public void setDate(LocalDate release) {
         this.release = release;
     }
     

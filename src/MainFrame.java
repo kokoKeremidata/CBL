@@ -1,9 +1,10 @@
 package src;
 
 import javax.swing.*;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -17,6 +18,17 @@ public class MainFrame extends javax.swing.JFrame {
     private AnimeDatabase db;
     private JPanel animeGridPanel;
     private AnimeCard selectedCard;
+    private Anime selectedAnime;
+    private JTree watchlistTree;
+    private JPanel selectedAnimePanel;
+    private JLabel selectedAnimePoster;
+    private JLabel selectedAnimeTitle;
+    private JSpinner episodesWatchedSpinner;
+    private JSpinner ratingSpinner;
+    private JComboBox<String> animeStatusCombo;
+    private JButton favouriteButton;
+    private JButton watchlistButton;
+    private boolean updatingAnimeDetails = false;
     /**
      * Creates new form NewJFrame
      */
@@ -25,6 +37,7 @@ public class MainFrame extends javax.swing.JFrame {
         jScrollPane1.getVerticalScrollBar().setUnitIncrement(40);
         setupMainLayout();
         
+        //load database
         try {
             db = DatabaseHandler.load();
         } catch (IOException | ClassNotFoundException e) {
@@ -37,6 +50,16 @@ public class MainFrame extends javax.swing.JFrame {
             );
             return;
         }
+        
+        //check favourites watchlist
+        db.ensureDefaultWatchlists();
+        try {
+            DatabaseHandler.save(db);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        //add default anime if no file or empty file
         if (db.getAllAnime().isEmpty()) {
             seedAnimeDatabase(db);
             try {
@@ -45,12 +68,13 @@ public class MainFrame extends javax.swing.JFrame {
                 e.printStackTrace();
             }
         }
-
+        
+        refreshWatchlistTree("All Anime");
         refreshAnimeCards();
 
         setTitle("Anime Watchlist Manager");
-        setSize(1000, 650);
-        setMinimumSize(new java.awt.Dimension(850,550));
+        setSize(1100, 810);
+        setMinimumSize(new java.awt.Dimension(850, 550));
         setLocationRelativeTo(null);
     }
 
@@ -424,13 +448,330 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
     
+    private String statusToString(Status status) {
+        if (status == null) {
+            return "Not Watched";
+        }
+
+        switch (status) {
+            case PLAN_TO_WATCH:
+                return "Plan to Watch";
+            case WATCHING:
+                return "Watching";
+            case COMPLETED:
+                return "Completed";
+            case ON_HOLD:
+                return "On Hold";
+            case DROPPED:
+                return "Dropped";
+            case NOT_WATCHED:
+            default:
+                return "Not Watched";
+        }
+    }
+    
+    private Watchlist getSelectedWatchlist() {
+        if (watchlistTree == null) {
+            return null;
+        }
+        
+        Object selectedNode = watchlistTree.getLastSelectedPathComponent();
+        Object value = ((DefaultMutableTreeNode) selectedNode).getUserObject();
+        String name = (String) value;
+        
+        if (name.equalsIgnoreCase("All Anime")) {
+            return null;
+        }
+        return db.findWatchlistByName(name);
+    }
+    
+    private void updateSelectedAnimePanel() {
+        if (selectedAnimePanel == null) {
+            return;
+        }
+        updatingAnimeDetails = true;
+
+        try {
+            if (selectedAnime == null) {
+                selectedAnimePoster.setIcon(null);
+                selectedAnimePoster.setText("Select an anime");
+                selectedAnimeTitle.setText("No anime selected");
+
+                episodesWatchedSpinner.setModel(
+                    new SpinnerNumberModel(0, 0, 1, 1)
+                );
+                ratingSpinner.setValue(0);
+                animeStatusCombo.setSelectedItem("Not Watched");
+
+                favouriteButton.setText("♥ Add to Favourites");
+                watchlistButton.setText("Add to Watchlist");
+
+                favouriteButton.setEnabled(false);
+                watchlistButton.setEnabled(false);
+                episodesWatchedSpinner.setEnabled(false);
+                ratingSpinner.setEnabled(false);
+                animeStatusCombo.setEnabled(false);
+
+                selectedAnimePanel.revalidate();
+                selectedAnimePanel.repaint();
+                return;
+            }
+            
+            favouriteButton.setEnabled(true);
+            watchlistButton.setEnabled(true);
+            episodesWatchedSpinner.setEnabled(true);
+            ratingSpinner.setEnabled(true);
+            animeStatusCombo.setEnabled(true);
+            
+            selectedAnimeTitle.setText(selectedAnime.getName(Lang.EN));
+
+            //load the poster from either a resource or local file
+            String path = selectedAnime.getPath();
+            ImageIcon poster = null;
+
+            if (path != null && !path.isBlank()) {
+                if (path.startsWith("/")) {
+                    java.net.URL url = getClass().getResource(path);
+                    if (url != null) {
+                        poster = new ImageIcon(url);
+                    }
+                } else {
+                    File file = new File(path);
+                    if (file.isFile()) {
+                        poster = new ImageIcon(path);
+                    }
+                }
+            }
+
+            if (poster != null && poster.getIconWidth() > 0) {
+                Image scaled = poster.getImage().getScaledInstance(
+                    120, 160, Image.SCALE_SMOOTH
+                );
+                selectedAnimePoster.setIcon(new ImageIcon(scaled));
+                selectedAnimePoster.setText("");
+            } else {
+                selectedAnimePoster.setIcon(null);
+                selectedAnimePoster.setText("No poster");
+            }
+
+            //spinner maximum for anime
+            int total = Math.max(1, selectedAnime.getEpT());
+            int watched = Math.max(
+                0, Math.min(selectedAnime.getEpW(), total)
+            );
+
+            episodesWatchedSpinner.setModel(
+                new SpinnerNumberModel(watched, 0, total, 1)
+            );
+
+            ratingSpinner.setValue(
+                Math.max(0, Math.min(selectedAnime.getRating(), 10))
+            );
+
+            animeStatusCombo.setSelectedItem(
+                statusToString(selectedAnime.getStatus())
+            );
+
+            Watchlist favourites = db.findWatchlistByName("Favourites");
+            boolean isFavourite = favourites != null
+                    && favourites.getAnime().contains(selectedAnime);
+
+            favouriteButton.setText(
+                isFavourite ? "♥ Remove Favourite" : "♥ Add to Favourites"
+            );
+
+            Watchlist currentWatchlist = getSelectedWatchlist();
+
+            if (currentWatchlist == null) {
+                watchlistButton.setText("Add to Watchlist...");
+            } else {
+                boolean isInWatchlist =
+                    currentWatchlist.getAnime().contains(selectedAnime);
+
+                watchlistButton.setText(
+                    isInWatchlist
+                        ? "Remove from " + currentWatchlist.getName()
+                        : "Add to " + currentWatchlist.getName()
+                );
+            }
+
+            selectedAnimePanel.revalidate();
+            selectedAnimePanel.repaint();
+        } finally {
+            updatingAnimeDetails = false;
+        }
+    }
+    
+    private void saveSelectedAnimeDetails() {
+        if (updatingAnimeDetails || selectedAnime == null || db == null) {
+            return;
+        }
+
+        int watched = (Integer) episodesWatchedSpinner.getValue();
+        int rating = (Integer) ratingSpinner.getValue();
+        String selectedStatus = (String) animeStatusCombo.getSelectedItem();
+
+        selectedAnime.setEpW(watched);
+        selectedAnime.setRating(rating);
+        selectedAnime.setStatus(getStatusFromString(selectedStatus));
+
+        try {
+            DatabaseHandler.save(db);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            applyPopupTheme(
+                "Could not save the anime changes.",
+                "Save Error",
+                JOptionPane.ERROR_MESSAGE,
+                JOptionPane.DEFAULT_OPTION
+            );
+        }
+
+        refreshAnimeCards();
+        updateSelectedAnimePanel();
+    }
+    
+    private void toggleFavourite() {
+        if (selectedAnime == null) {
+            return;
+        }
+        Watchlist favourites = db.findWatchlistByName("Favourites");
+
+        if (favourites == null) {
+            favourites = new Watchlist("Favourites");
+            db.addWatchlist(favourites);
+            favourites = db.findWatchlistByName("Favourites");
+        }
+        if (favourites == null) {
+            return;
+        }
+        if (favourites.getAnime().contains(selectedAnime)) {
+            favourites.removeAnime(selectedAnime);
+        } else {
+            favourites.addAnime(selectedAnime);
+        }
+
+        saveDatabaseAndRefresh();
+    }
+    
+    private void toggleSelectedWatchlist() {
+        if (selectedAnime == null) {
+            return;
+        }
+        Watchlist watchlist = getSelectedWatchlist();
+
+        //which list to use
+        if (watchlist == null) {
+            List<Watchlist> watchlists = db.getWatchlists();
+            if (watchlists.isEmpty()) {
+                applyPopupTheme(
+                    "Create a watchlist first.",
+                    "No Watchlists",
+                    JOptionPane.INFORMATION_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+                );
+                return;
+            }
+            String[] names = new String[watchlists.size()];
+
+            for (int i = 0; i < watchlists.size(); i++) {
+                names[i] = watchlists.get(i).getName();
+            }
+            Object choice = JOptionPane.showInputDialog(
+                this,
+                "Choose a watchlist:",
+                "Add to Watchlist",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                names,
+                names[0]
+            );
+            if (choice == null) {
+                return;
+            }
+            watchlist = db.findWatchlistByName(choice.toString());
+        }
+        if (watchlist == null) {
+            return;
+        }
+        if (watchlist.getAnime().contains(selectedAnime)) {
+            watchlist.removeAnime(selectedAnime);
+        } else {
+            watchlist.addAnime(selectedAnime);
+        }
+        saveDatabaseAndRefresh();
+    }
+        
+    private void saveDatabaseAndRefresh() {
+        Anime animeToKeep = selectedAnime;
+        Watchlist current = getSelectedWatchlist();
+        String watchlistName = 
+                current == null ? "All Anime" : current.getName();
+        try {
+            DatabaseHandler.save(db);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            applyPopupTheme(
+                "Could not save the database.",
+                "Save Error",
+                JOptionPane.ERROR_MESSAGE,
+                JOptionPane.DEFAULT_OPTION
+            );
+        }
+        refreshWatchlistTree(watchlistName);
+
+        selectedAnime = animeToKeep;
+        selectedCard = null;
+
+        refreshAnimeCards();
+        updateSelectedAnimePanel();
+    }
+    
     private void refreshAnimeCards() {
         List<Anime> filteredList = new ArrayList<>();
         String search = jTextField1.getText().trim().toLowerCase(Locale.ROOT);
         String selected = (String) jComboBox1.getSelectedItem();
         Status status = getStatusFromString(selected);
-        //filter anime
+        
+        //start with anime  matching the search
         filteredList = db.searchAnime(search);
+        
+        //watchlist anime only
+        if (watchlistTree != null) {
+                Object selectedNode =
+                        watchlistTree.getLastSelectedPathComponent();
+
+                if (selectedNode instanceof DefaultMutableTreeNode) {
+                    DefaultMutableTreeNode node =
+                            (DefaultMutableTreeNode) selectedNode;
+                    Object value = node.getUserObject();
+                    System.out.println("Selected tree item: " + value);
+
+                    Watchlist test = db.findWatchlistByName(
+                            value instanceof String ? (String) value : "");
+
+                    System.out.println("Found watchlist: "
+                            + (test == null ? "null" : test.getName()));
+
+                    System.out.println("Anime in watchlist: "
+                            + (test == null ? -1 : test.getAnime().size()));
+                    if (value instanceof String
+                            && ((String) value).equalsIgnoreCase("All Anime")) {
+                        // All Anime intentionally shows every anime.
+                    } else if (value instanceof String) {
+                        Watchlist selectedWatchlist =
+                                db.findWatchlistByName((String) value);
+
+                        if (selectedWatchlist == null) {
+                            filteredList.clear();
+                        } else {
+                            filteredList.retainAll(selectedWatchlist.getAnime());
+                        }
+                    }
+                }
+            }
+        
+        //status filter
         if (status != null) {
             List<Anime> statusFilteredList = new ArrayList<>();
             for (Anime a : filteredList) {
@@ -442,6 +783,7 @@ public class MainFrame extends javax.swing.JFrame {
         }
         
         //refresh cards + selection
+        System.out.println("Anime cards to display: " + filteredList.size());
         animeGridPanel.removeAll();
         for (Anime a : filteredList) {
             AnimeCard card = new AnimeCard(a);
@@ -452,13 +794,54 @@ public class MainFrame extends javax.swing.JFrame {
                         selectedCard.setSelected(false);
                     }
                     selectedCard = card;
+                    selectedAnime = card.getAnime();
                     selectedCard.setSelected(true);
+                    updateSelectedAnimePanel();
                 }
             });
+            //preserve selection when search or filters rebuild the cards
+            if (selectedAnime != null && selectedAnime.equals(a)) {
+                selectedCard = card;
+                card.setSelected(true);
+            }
             animeGridPanel.add(card);
-            animeGridPanel.revalidate();
-            animeGridPanel.repaint();
         }
+
+        // Refresh the grid once, after all changes are complete
+        animeGridPanel.revalidate();
+        animeGridPanel.repaint();
+        animeGridPanel.getParent().revalidate();
+        animeGridPanel.getParent().repaint();
+    }
+    
+    private void refreshWatchlistTree(String selectName) {
+        DefaultMutableTreeNode root =
+                new DefaultMutableTreeNode("My Watchlist");
+
+        DefaultMutableTreeNode allAnimeNode =
+                new DefaultMutableTreeNode("All Anime");
+
+        root.add(allAnimeNode);
+
+        for (Watchlist watchlist : db.getWatchlists()) {
+            root.add(new DefaultMutableTreeNode(watchlist.getName()));
+        }
+
+        DefaultTreeModel model = new DefaultTreeModel(root);
+        watchlistTree.setModel(model);
+        TreePath pathToSelect = new TreePath(allAnimeNode.getPath());
+
+        for (int i = 0; i < root.getChildCount(); i++) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode)
+                            root.getChildAt(i);
+
+            if (node.getUserObject().toString().equalsIgnoreCase(selectName)) {
+                pathToSelect = new TreePath(node.getPath());
+                break;
+            }
+        }
+
+        watchlistTree.setSelectionPath(pathToSelect);
     }
     
     private int applyPopupTheme(
@@ -571,7 +954,8 @@ public class MainFrame extends javax.swing.JFrame {
 
         jPanel2.setLayout(new BorderLayout(0, 12));
         jPanel2.setBackground(cardBackground);
-        jPanel2.setPreferredSize(new Dimension(245, 0));
+        jPanel2.setPreferredSize(new Dimension(265, 0));
+        jPanel2.setMinimumSize(new Dimension(265, 0));
         jPanel2.setBorder(
             BorderFactory.createEmptyBorder(18, 14, 18, 14)
         );
@@ -976,8 +1360,30 @@ public class MainFrame extends javax.swing.JFrame {
                 "Not Watched"
             }
         ));
+        jComboBox1.addActionListener(e -> refreshAnimeCards());
 
         // Search field
+        jTextField1.getDocument().addDocumentListener(
+            new javax.swing.event.DocumentListener() {
+                @Override
+                public void insertUpdate(
+                        javax.swing.event.DocumentEvent e) {
+                    refreshAnimeCards();
+                }
+
+                @Override
+                public void removeUpdate(
+                        javax.swing.event.DocumentEvent e) {
+                    refreshAnimeCards();
+                }
+
+                @Override
+                public void changedUpdate(
+                        javax.swing.event.DocumentEvent e) {
+                    refreshAnimeCards();
+                }
+            }
+        );
         toolbar.add(jTextField1, BorderLayout.CENTER);
 
         // Search button
@@ -1044,38 +1450,306 @@ public class MainFrame extends javax.swing.JFrame {
         JLabel watchlistLabel = new JLabel("WATCHLIST");
         watchlistLabel.setForeground(foreground);
         watchlistLabel.setFont(new Font(APP_FONT, Font.BOLD, 16));
+        
+        //populate tree
+        DefaultMutableTreeNode root = 
+                new DefaultMutableTreeNode("My Watchlist");
 
-        javax.swing.tree.DefaultMutableTreeNode root =
-            new javax.swing.tree.DefaultMutableTreeNode("My Watchlist");
-
-        String[] statuses = {
-            "Watching",
-            "Completed",
-            "Plan to Watch",
-            "On Hold",
-            "Dropped"
-        };
-
-        for (String status : statuses) {
-            root.add(new javax.swing.tree.DefaultMutableTreeNode(status));
-        }
-
-        JTree watchlistTree = new JTree(root);
+        watchlistTree = new JTree(root);
         watchlistTree.setRootVisible(false);
         watchlistTree.setShowsRootHandles(true);
         watchlistTree.setBackground(cardBackground);
         watchlistTree.setForeground(foreground);
-        watchlistTree.setBorder(
-            BorderFactory.createEmptyBorder(8, 4, 8, 4)
-        );
-
-        JScrollPane watchlistScroll =
-            new JScrollPane(watchlistTree);
+        watchlistTree.setBorder(BorderFactory.createEmptyBorder(8, 4, 8, 4));
+        
+        watchlistTree.addTreeSelectionListener(e -> {
+            selectedCard = null;
+            selectedAnime = null;
+            updateSelectedAnimePanel();
+            refreshAnimeCards();
+        });
+        
+        JScrollPane watchlistScroll = new JScrollPane(watchlistTree);
         watchlistScroll.setBorder(null);
         watchlistScroll.getViewport().setBackground(cardBackground);
+        
+        //add watchlist button
+        JButton createWatchlistButton = new JButton("+ Create Watchlist");
+        createWatchlistButton.setBackground(accent);
+        createWatchlistButton.setForeground(background);
 
-        jPanel2.add(watchlistLabel, BorderLayout.NORTH);
-        jPanel2.add(watchlistScroll, BorderLayout.CENTER);
+        createWatchlistButton.addActionListener(e -> {
+            JTextField nameField = new JTextField(18);
+
+            int choice = applyPopupTheme(
+                    nameField,
+                    "Create Watchlist",
+                    JOptionPane.PLAIN_MESSAGE,
+                    JOptionPane.OK_CANCEL_OPTION
+            );
+
+            if (choice != JOptionPane.OK_OPTION) {
+                return;
+            }
+
+            String name = nameField.getText().trim();
+
+            if (name.isEmpty()) {
+                applyPopupTheme(
+                        "Watchlist name cannot be empty.",
+                        "Invalid Name",
+                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                );
+                return;
+            }
+
+            if (name.equalsIgnoreCase("All Anime")
+                    || db.findWatchlistByName(name) != null) {
+                applyPopupTheme(
+                        "Watchlist already exists.",
+                        "Invalid Name",
+                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                );
+                return;
+            }
+
+            db.addWatchlist(new Watchlist(name));
+
+            try {
+                DatabaseHandler.save(db);
+                refreshWatchlistTree(name);
+            } catch (IOException ex) {
+                applyPopupTheme(
+                        "Could not save the watchlist.",
+                        "Save Error",
+                        JOptionPane.ERROR_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                );
+                ex.printStackTrace();
+            }
+        });
+        
+        //remove watchlist
+        JButton deleteWatchlistButton = new JButton("- Delete Watchlist");
+        deleteWatchlistButton.setBackground(accent);
+        deleteWatchlistButton.setForeground(background);
+
+        deleteWatchlistButton.addActionListener(e -> {
+            Object selectedNode =
+                    watchlistTree.getLastSelectedPathComponent();
+
+            if (!(selectedNode instanceof DefaultMutableTreeNode)) {
+                applyPopupTheme(
+                        "Select a custom watchlist to delete.",
+                        "No Watchlist Selected",
+                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                );
+                return;
+            }
+
+            javax.swing.tree.DefaultMutableTreeNode node =
+                    (javax.swing.tree.DefaultMutableTreeNode) selectedNode;
+
+            Object value = node.getUserObject();
+
+            if (!(value instanceof String)
+                    || value.equals("All Anime")
+                    || ((String) value).equalsIgnoreCase("Favourites")) {
+                applyPopupTheme(
+                        "All Anime and Favourites cannot be deleted.",
+                        "Cannot Delete",
+                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                );
+                return;
+            }
+
+            String name = (String) value;
+
+            int choice = applyPopupTheme(
+                    "Delete the watchlist \"" + name + "\"?",
+                    "Confirm Deletion",
+                    JOptionPane.WARNING_MESSAGE,
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (choice != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            Watchlist watchlist = db.findWatchlistByName(name);
+            if (watchlist != null) {
+                db.removeWatchlist(watchlist);
+            }
+
+            try {
+                DatabaseHandler.save(db);
+                refreshWatchlistTree("All Anime");
+            } catch (IOException ex) {
+                applyPopupTheme(
+                        "Could not save the database.",
+                        "Save Error",
+                        JOptionPane.ERROR_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                );
+                ex.printStackTrace();
+            }
+        });
+        
+        // Watchlist buttons
+        JPanel watchlistButtons = new JPanel(new GridLayout(0, 1, 0, 8));
+        watchlistButtons.setBackground(cardBackground);
+        watchlistButtons.add(createWatchlistButton);
+        watchlistButtons.add(deleteWatchlistButton);
+
+        // Watchlist section: heading, tree, buttons
+        JPanel watchlistPanel = new JPanel(new BorderLayout(0, 8));
+        watchlistPanel.setBackground(cardBackground);
+        watchlistPanel.add(watchlistLabel, BorderLayout.NORTH);
+        watchlistPanel.add(watchlistScroll, BorderLayout.CENTER);
+        watchlistPanel.add(watchlistButtons, BorderLayout.SOUTH);
+        watchlistPanel.setPreferredSize(new Dimension(217, 250));
+
+        // Selected anime section
+        selectedAnimePanel = new JPanel();
+        selectedAnimePanel.setLayout(
+            new BoxLayout(selectedAnimePanel, BoxLayout.Y_AXIS)
+        );
+        selectedAnimePanel.setBackground(cardBackground);
+        selectedAnimePanel.setBorder(
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(accent),
+                BorderFactory.createEmptyBorder(10, 8, 10, 8)
+            )
+        );
+        selectedAnimePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Selected anime heading
+        JLabel selectedHeading = new JLabel("SELECTED ANIME");
+        selectedHeading.setForeground(accent);
+        selectedHeading.setFont(new Font(APP_FONT, Font.BOLD, 14));
+        selectedHeading.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        selectedAnimePoster = new JLabel("Select an anime");
+        selectedAnimePoster.setForeground(foreground);
+        selectedAnimePoster.setHorizontalAlignment(SwingConstants.CENTER);
+        selectedAnimePoster.setAlignmentX(Component.CENTER_ALIGNMENT);
+        selectedAnimePoster.setPreferredSize(new Dimension(120, 160));
+        selectedAnimePoster.setMinimumSize(new Dimension(120, 160));
+        selectedAnimePoster.setMaximumSize(new Dimension(120, 160));
+
+        selectedAnimeTitle = new JLabel("No anime selected");
+        selectedAnimeTitle.setForeground(foreground);
+        selectedAnimeTitle.setFont(new Font(APP_FONT, Font.BOLD, 12));
+        selectedAnimeTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        selectedAnimeTitle.setHorizontalAlignment(SwingConstants.CENTER);
+        selectedAnimeTitle.setMaximumSize(new Dimension(200, 50));
+
+        // Watched episodes
+        JLabel watchedLabel = new JLabel("Episodes watched");
+        watchedLabel.setForeground(foreground);
+        watchedLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        episodesWatchedSpinner = new JSpinner(
+            new SpinnerNumberModel(0, 0, 1, 1)
+        );
+        episodesWatchedSpinner.setMaximumSize(
+            new Dimension(200, 30)
+        );
+        episodesWatchedSpinner.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Rating
+        JLabel ratingLabel = new JLabel("Rating (0-10)");
+        ratingLabel.setForeground(foreground);
+        ratingLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        ratingSpinner = new JSpinner(
+            new SpinnerNumberModel(0, 0, 10, 1)
+        );
+        ratingSpinner.setMaximumSize(
+            new Dimension(200, 30)
+        );
+        ratingSpinner.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Status
+        JLabel statusLabel = new JLabel("Status");
+        statusLabel.setForeground(foreground);
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        animeStatusCombo = new JComboBox<>(new String[] {
+            "Not Watched",
+            "Plan to Watch",
+            "Watching",
+            "Completed",
+            "On Hold",
+            "Dropped"
+        });
+        animeStatusCombo.setMaximumSize(
+            new Dimension(200, 30)
+        );
+        animeStatusCombo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Favourite button
+        favouriteButton = new JButton("♥ Add to Favourites");
+        favouriteButton.setBackground(accent);
+        favouriteButton.setForeground(background);
+        favouriteButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        favouriteButton.setMaximumSize(
+            new Dimension(200, 34)
+        );
+        favouriteButton.addActionListener(e -> toggleFavourite());
+
+        // Watchlist button
+        watchlistButton = new JButton("Add to Watchlist");
+        watchlistButton.setBackground(accent);
+        watchlistButton.setForeground(background);
+        watchlistButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        watchlistButton.setMaximumSize(
+            new Dimension(200, 34)
+        );
+        watchlistButton.addActionListener(e -> toggleSelectedWatchlist());
+
+        // Add components to selected anime panel
+        selectedAnimePanel.add(selectedHeading);
+        selectedAnimePanel.add(Box.createVerticalStrut(8));
+        selectedAnimePanel.add(selectedAnimePoster);
+        selectedAnimePanel.add(Box.createVerticalStrut(8));
+        selectedAnimePanel.add(selectedAnimeTitle);
+        selectedAnimePanel.add(Box.createVerticalStrut(12));
+        selectedAnimePanel.add(watchedLabel);
+        selectedAnimePanel.add(episodesWatchedSpinner);
+        selectedAnimePanel.add(Box.createVerticalStrut(8));
+        selectedAnimePanel.add(ratingLabel);
+        selectedAnimePanel.add(ratingSpinner);
+        selectedAnimePanel.add(Box.createVerticalStrut(8));
+        selectedAnimePanel.add(statusLabel);
+        selectedAnimePanel.add(animeStatusCombo);
+        selectedAnimePanel.add(Box.createVerticalStrut(12));
+        selectedAnimePanel.add(favouriteButton);
+        selectedAnimePanel.add(Box.createVerticalStrut(6));
+        selectedAnimePanel.add(watchlistButton);
+
+        //save changes when the user edits a field
+        episodesWatchedSpinner.addChangeListener(e -> saveSelectedAnimeDetails());
+        ratingSpinner.addChangeListener(e -> saveSelectedAnimeDetails());
+        animeStatusCombo.addActionListener(e -> saveSelectedAnimeDetails());
+
+        
+        jPanel2.add(watchlistPanel, BorderLayout.NORTH);
+        //scrollable anime view
+        JScrollPane selectedAnimeScroll = new JScrollPane(selectedAnimePanel);
+        selectedAnimeScroll.setBorder(null);
+        selectedAnimeScroll.getViewport().setBackground(cardBackground);
+        selectedAnimeScroll.getVerticalScrollBar().setUnitIncrement(16);
+        selectedAnimeScroll.setHorizontalScrollBarPolicy(
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
+        jPanel2.add(selectedAnimeScroll, BorderLayout.CENTER);
+
+        updateSelectedAnimePanel();
 
         // Hide the old action buttons for now.
         // Edit and Delete shall pop up when an anime is selected.
