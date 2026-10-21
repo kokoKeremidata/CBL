@@ -542,17 +542,26 @@ public class MainFrame extends javax.swing.JFrame {
                     }
                 }
             }
+            
+            //scale down image
+            selectedAnimePoster.removeAll();
+            selectedAnimePoster.setIcon(null);
 
             if (poster != null && poster.getIconWidth() > 0) {
-                Image scaled = poster.getImage().getScaledInstance(
-                    120, 160, Image.SCALE_SMOOTH
-                );
-                selectedAnimePoster.setIcon(new ImageIcon(scaled));
                 selectedAnimePoster.setText("");
+
+                selectedAnimePoster.setLayout(new BorderLayout());
+
+                ScaledImageLabel scaledPoster =
+                    new ScaledImageLabel(poster.getImage());
+
+                selectedAnimePoster.add(scaledPoster, BorderLayout.CENTER);
             } else {
-                selectedAnimePoster.setIcon(null);
                 selectedAnimePoster.setText("No poster");
             }
+
+            selectedAnimePoster.revalidate();
+            selectedAnimePoster.repaint();
 
             //spinner maximum for anime
             int total = Math.max(1, selectedAnime.getEpT());
@@ -1626,7 +1635,7 @@ public class MainFrame extends javax.swing.JFrame {
             )
         );
         selectedAnimePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
+        
         // Selected anime heading
         JLabel selectedHeading = new JLabel("SELECTED ANIME");
         selectedHeading.setForeground(accent);
@@ -1646,7 +1655,7 @@ public class MainFrame extends javax.swing.JFrame {
         selectedAnimeTitle.setFont(new Font(APP_FONT, Font.BOLD, 12));
         selectedAnimeTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         selectedAnimeTitle.setHorizontalAlignment(SwingConstants.CENTER);
-        selectedAnimeTitle.setMaximumSize(new Dimension(200, 50));
+        selectedAnimeTitle.setMaximumSize(new Dimension(180, 50));
 
         // Watched episodes
         JLabel watchedLabel = new JLabel("Episodes watched");

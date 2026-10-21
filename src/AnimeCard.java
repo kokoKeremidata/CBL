@@ -91,36 +91,3 @@ public class AnimeCard extends JPanel {
         return anime;
     }
 }
-
-class ScaledImageLabel extends JLabel {
-    private final Image image;
-    int imageWidth = 140;
-    int imageHeight = 180;
-
-    public ScaledImageLabel(Image image) {
-        this.image = image;
-        setPreferredSize(new Dimension(imageWidth, imageHeight));
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
-        if (image != null) {
-            Graphics2D g2 = (Graphics2D) g.create();
-
-            g2.setRenderingHint(
-                RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_BICUBIC
-            );
-
-            int x = (getWidth() - imageWidth) / 2;
-            int y = (getHeight() - imageHeight) / 2;
-
-            g2.drawImage(
-                image, x, y, imageWidth, imageHeight, this
-            );
-            g2.dispose();
-        }
-    }
-}
